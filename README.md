@@ -87,10 +87,7 @@ npm run deploy
 
 ## Using in GTM
 
-Add the script URL to your GTM custom HTML tag:
-```html
-<script src="https://klaviyo-hotel-debug-1769738861.surge.sh/klaviyo_hotel_tracking_debug.js"></script>
-```
+Add the script URL to your GTM Tag Template. See .tpl file for more info.
 
 ## Architecture
 
