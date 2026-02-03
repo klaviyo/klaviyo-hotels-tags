@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "description": "Klaviyo hotel tracking for GTM",
   "scripts": {
-    "build": "esbuild src/klaviyo_hotel_tracking_debug.js --bundle --outfile=klaviyo_hotel_tracking_debug.js --format=iife",
-    "build:prod": "esbuild src/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking.js --format=iife --minify",
+    "build": "esbuild src/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking.js --format=iife",
     "deploy": "npm run build && surge",
-    "watch": "esbuild src/klaviyo_hotel_tracking_debug.js --bundle --outfile=klaviyo_hotel_tracking_debug.js --format=iife --watch"
+    "watch": "esbuild src/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking.js --format=iife --watch"
   },
   "devDependencies": {
     "esbuild": "^0.20.0"

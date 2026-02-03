@@ -1,4 +1,4 @@
-import { debugLog, isValidEmail, KLAVIYO_EVENT_KEY_MAP, isOnGuestsPage, parseEventData } from './utils-prod.js';
+import { debugLog, isValidEmail, KLAVIYO_EVENT_KEY_MAP, isOnGuestsPage, parseEventData } from './utils.js';
 
 (function() {
     debugLog('Script initialized');

@@ -1,1 +1,399 @@
-(()=>{function m(d){return!d||d.length<5?!1:/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d)}var w={cb_booking_engine_load:"Viewed Booking Engine",view_item:"Viewed Listing",add_to_cart:"Viewed Listing",begin_checkout:"Started Checkout"};function b(){return window.location.href.indexOf("/guests")>-1||document.getElementById("guest-form")}function x(d){let c,g,u,h=!1,a=!1;if(d.length&&d[0]==="event"&&typeof d[1]=="string")try{c=d[1],g=d[2]||{},u=g.items,a=!0}catch(f){}if(!a)try{c=d.event,g=d.ecommerce||{},u=g.items,h=!0}catch(f){}return{eventName:c,ecommerceData:g,ecommerceItems:u,isGA4Event:h,isGtagEvent:a}}(function(){function d(t){let e=window.klaviyo||[],{eventName:o,ecommerceData:i,ecommerceItems:n}=x(t);if(o==="form_start"){let r=t.eventModel||i.eventModel;r&&((r.form_id==="guest-form"||r.first_field_name==="email"||r.first_field_type==="email")&&(setTimeout(function(){typeof f<"u"&&f("form_start event")},500),setTimeout(function(){typeof p<"u"&&p()},1e3)))}if(o==="form_interaction"||o==="gtm.formInteract"){let r=t["gtm.element"];r&&(r.name==="email"||r.name==="phoneNumber")&&void 0}o&&w[o]?(w[o],o=="cb_booking_engine_load"||o=="view_item"?n&&n.length>0?c(n[0],i):i&&Object.keys(i).length>1?c(i,i):void 0:o=="add_to_cart"?n&&n.length>0&&c(n[0],i):o=="begin_checkout"&&(g(n,i),setTimeout(function(){typeof f<"u"&&f("begin_checkout event")},500),setTimeout(function(){typeof p<"u"&&p()},1e3))):void 0}function c(t,e){let o=window.klaviyo||[];if(!t||!t.item_name&&!t.name&&!t.item_id&&!t.id){return}let i={Title:t.item_name||t.name||"",ID:t.item_id||t.id||"",Price:t.price||0,URL:window.location.href,$value:t.price||0};(t.affiliation||t.item_brand)&&(i["Property Name"]=t.affiliation||t.item_brand),t.item_category&&(i["Property Type"]=t.item_category),e.city&&(i["Listing City"]=e.city),e.country&&(i["Listing Country"]=e.country),(t.image_url||t.item_image)&&(i.ImageURL=t.image_url||t.item_image),i.$extra={},(t.start_date||e.start_date)&&(i.$extra.start_date=t.start_date||e.start_date),(t.end_date||e.end_date)&&(i.$extra.end_date=t.end_date||e.end_date),t.total_guests&&(i.$extra.total_guests=t.total_guests),t.adults&&(i.$extra.adults=t.adults),t.kids&&(i.$extra.kids=t.kids),(t.nights||t.quantity)&&(i.$extra.nights=t.nights||t.quantity),t.item_category2&&(i.$extra.room_type=t.item_category2),t.item_variant&&(i.$extra.rate_plan=t.item_variant),(t.item_package_name||t.item_package_id)&&(i.$extra.package_name=t.item_package_name,i.$extra.package_id=t.item_package_id),e.property_id&&(i.$extra.property_id=e.property_id),o.track("Viewed Listing",i)}function g(t,e){let o=window.klaviyo||[],i=0,n={},r=0;if(t&&t.length>0){for(let s=0;s<t.length;s++){let _=t[s].price||0,l=t[s].quantity||1;i+=_*l,t[s].total_guests?r+=t[s].total_guests:(t[s].adults||t[s].kids)&&(r+=(t[s].adults||0)+(t[s].kids||0))}n.Items=t}else e.value&&(i=e.value);if(n.$value=parseFloat(i.toFixed(2)),e.currency&&(n.Currency=e.currency),r>0&&(n["Number of Guests"]=r),(e.start_date||e.check_in||e.checkin||e.check_in_date)&&(n.CheckIn=e.start_date||e.check_in||e.checkin||e.check_in_date),(e.end_date||e.check_out||e.checkout||e.check_out_date)&&(n.CheckOut=e.end_date||e.check_out||e.checkout||e.check_out_date),(e.total_guests||e.guests||e.guest_count)&&(n["Number of Guests"]=e.total_guests||e.guests||e.guest_count),t&&t.length>0&&t[0].nights&&(n["Number of Nights"]=t[0].nights),e.adults&&(n.$extra.adults=e.adults),(e.children||e.kids)&&(n.$extra.children=e.children||e.kids),(e.rooms||e.room_count)&&(n.$extra.number_of_rooms=e.rooms||e.room_count),n.CheckIn&&n.CheckOut)try{let s=new Date(n.CheckIn),_=new Date(n.CheckOut),l=Math.round((_-s)/(1e3*60*60*24));l>0&&(n["Number of Nights"]=l)}catch(s){}t&&t.length>0&&t[0].affiliation?n["Property Name"]=t[0].affiliation:e.property_name&&(n["Property Name"]=e.property_name),n.$extra={},e.property_id&&(n.$extra.property_id=e.property_id),e.coupon&&(n.$extra.coupon=e.coupon),e.tax&&(n.$extra.tax=e.tax),e.shipping&&(n.$extra.fees=e.shipping),e.be_source&&(n.$extra.booking_engine_source=e.be_source),o.track("Started Checkout",n)}let u=window.dataLayer;if(!u){return}let h=u.push;if(u.push=function(){let t=Array.prototype.slice.call(arguments);h.apply(window.dataLayer,t);let e;for(let o=0;o<t.length;o++)if(typeof t[o]=="object"){e=t[o];break}e&&d(e)},u.length,u.length>0)for(let t=0;t<u.length;t++)typeof u[t]=="object"&&(""+t,u[t],d(u[t]));let a=!1;function f(t){let e=window.klaviyo||[];t&&void 0,e.isIdentified&&typeof e.isIdentified=="function"?e.isIdentified().then(function(o){if(o){a=!0;return}y(t)}).catch(function(o){y(t)}):y(t)}function y(t){let e=window.klaviyo||[],o=document.querySelector('input[name="email"]')||document.querySelector('[data-testid="guest-form-email-input"]')||document.querySelector('input[type="email"]'),i=document.querySelector('input[name="phoneNumber"]')||document.querySelector('[data-testid="guest-form-phone-input"]')||document.querySelector('input[type="tel"][name="phoneNumber"]');let n=o?o.value.trim():"",r=i?i.value.trim():"";let s=n&&m(n),_=r&&r.length>0;if(!s&&n&&void 0,(s||_)&&!a){let l={};if(s&&(l.email=n),_&&(l.phone_number=r),l.email||l.phone_number){let k=document.querySelector('input[name="firstName"]')||document.querySelector('[data-testid="guest-form-first-name-input"]')||document.querySelector('input[autocomplete="given-name"]'),v=document.querySelector('input[name="lastName"]')||document.querySelector('[data-testid="guest-form-last-name-input"]')||document.querySelector('input[autocomplete="family-name"]');k&&k.value.trim()&&(l.first_name=k.value.trim()),v&&v.value.trim()&&(l.last_name=v.value.trim()),e.identify(l),a=!0}}else a?void 0:void 0}function p(){if(a)return;f("monitoring start");let t=document.getElementById("guest-form")||document.querySelector('form[data-testid="guest-form"]');if(!t){return}let e=t.querySelectorAll("input, textarea, select");""+e.length;for(let o=0;o<e.length;o++)(function(i){i.addEventListener("blur",function(){i.name||i.type,setTimeout(function(){f("field blur: "+(i.name||i.type))},500)})})(e[o]);t.addEventListener("submit",function(o){f("form submit")})}b()&&setTimeout(p,1e3);let I=u.push,E=function(){b()&&!a&&setTimeout(p,1e3)};window.addEventListener("popstate",E)})();})();
+(() => {
+  // src/utils.js
+  var DEBUG = true;
+  function debugLog(message, data) {
+    if (DEBUG) {
+      console.log("[Klaviyo Hotel Tracking] " + message, data || "");
+    }
+  }
+  function isValidEmail(email) {
+    if (!email || email.length < 5)
+      return false;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+  var KLAVIYO_EVENT_KEY_MAP = {
+    "cb_booking_engine_load": "Viewed Booking Engine",
+    "view_item": "Viewed Listing",
+    "add_to_cart": "Viewed Listing",
+    // Track as Viewed Listing since no listing page exists
+    "begin_checkout": "Started Checkout"
+  };
+  function isOnGuestsPage() {
+    return window.location.href.indexOf("/guests") > -1 || document.getElementById("guest-form");
+  }
+  function parseEventData(event) {
+    let eventName, ecommerceData, ecommerceItems, isGA4Event = false, isGtagEvent = false;
+    if (event.length && event[0] === "event" && typeof event[1] === "string") {
+      try {
+        eventName = event[1];
+        ecommerceData = event[2] || {};
+        ecommerceItems = ecommerceData.items;
+        isGtagEvent = true;
+        debugLog("Parsed as gtag event:", { eventName, hasItems: !!ecommerceItems, data: ecommerceData });
+      } catch (err) {
+        debugLog("Error parsing gtag event:", err);
+      }
+    }
+    if (!isGtagEvent) {
+      try {
+        eventName = event.event;
+        ecommerceData = event.ecommerce || {};
+        ecommerceItems = ecommerceData.items;
+        isGA4Event = true;
+        debugLog("Parsed as GA4 event:", { eventName, hasItems: !!ecommerceItems });
+      } catch (err) {
+        debugLog("Error parsing event:", err);
+      }
+    }
+    return { eventName, ecommerceData, ecommerceItems, isGA4Event, isGtagEvent };
+  }
+
+  // src/klaviyo_hotel_tracking.js
+  (function() {
+    debugLog("Script initialized");
+    function handleDataLayerPush(event) {
+      debugLog("Event received:", event);
+      const klaviyo = window.klaviyo || [];
+      const { eventName, ecommerceData, ecommerceItems } = parseEventData(event);
+      if (eventName === "form_start") {
+        debugLog("form_start event detected");
+        const eventModel = event.eventModel || ecommerceData.eventModel;
+        if (eventModel) {
+          debugLog("form_start eventModel:", eventModel);
+          if (eventModel.form_id === "guest-form" || eventModel.first_field_name === "email" || eventModel.first_field_type === "email") {
+            debugLog("Guest form detected via form_start - checking for email/phone");
+            setTimeout(function() {
+              if (typeof attemptIdentify !== "undefined") {
+                attemptIdentify("form_start event");
+              }
+            }, 500);
+            setTimeout(function() {
+              if (typeof startIdentifyMonitoring !== "undefined") {
+                startIdentifyMonitoring();
+              }
+            }, 1e3);
+          }
+        }
+      }
+      if (eventName === "form_interaction" || eventName === "gtm.formInteract") {
+        const formElement = event["gtm.element"];
+        if (formElement && (formElement.name === "email" || formElement.name === "phoneNumber")) {
+          debugLog("User interacted with email/phone field - will check after blur");
+        }
+      }
+      if (eventName && KLAVIYO_EVENT_KEY_MAP[eventName]) {
+        debugLog("Matched event type:", KLAVIYO_EVENT_KEY_MAP[eventName]);
+        if (eventName == "cb_booking_engine_load" || eventName == "view_item") {
+          debugLog("Processing Viewed Listing event");
+          debugLog("Items available:", ecommerceItems);
+          debugLog("Ecommerce data:", ecommerceData);
+          if (ecommerceItems && ecommerceItems.length > 0) {
+            debugLog("Using items[0] for listing data");
+            trackViewedListing(ecommerceItems[0], ecommerceData);
+          } else if (ecommerceData && Object.keys(ecommerceData).length > 1) {
+            debugLog("Using ecommerceData directly for listing data");
+            trackViewedListing(ecommerceData, ecommerceData);
+          } else {
+            debugLog("Skipping empty Viewed Listing event (no data)");
+          }
+        } else if (eventName == "add_to_cart") {
+          debugLog("Processing add_to_cart as Viewed Listing (no listing page on Cloudbeds)");
+          if (ecommerceItems && ecommerceItems.length > 0) {
+            trackViewedListing(ecommerceItems[0], ecommerceData);
+          }
+        } else if (eventName == "begin_checkout") {
+          debugLog("Processing Started Checkout event");
+          trackStartedCheckout(ecommerceItems, ecommerceData);
+          setTimeout(function() {
+            if (typeof attemptIdentify !== "undefined") {
+              attemptIdentify("begin_checkout event");
+            }
+          }, 500);
+          setTimeout(function() {
+            if (typeof startIdentifyMonitoring !== "undefined") {
+              startIdentifyMonitoring();
+            }
+          }, 1e3);
+        }
+      } else {
+        debugLog("Event not recognized or not in map:", eventName);
+      }
+    }
+    function trackViewedListing(itemData, ecommerceData) {
+      debugLog("trackViewedListing called with:", { itemData, ecommerceData });
+      const klaviyo = window.klaviyo || [];
+      if (!itemData || !itemData.item_name && !itemData.name && !itemData.item_id && !itemData.id) {
+        debugLog("Skipping Viewed Listing - no item data");
+        return;
+      }
+      const listingData = {
+        "Title": itemData.item_name || itemData.name || "",
+        "ID": itemData.item_id || itemData.id || "",
+        "Price": itemData.price || 0,
+        "URL": window.location.href,
+        "$value": itemData.price || 0
+      };
+      if (itemData.affiliation || itemData.item_brand) {
+        listingData["Property Name"] = itemData.affiliation || itemData.item_brand;
+      }
+      if (itemData.item_category) {
+        listingData["Property Type"] = itemData.item_category;
+      }
+      if (ecommerceData.city)
+        listingData["Listing City"] = ecommerceData.city;
+      if (ecommerceData.country)
+        listingData["Listing Country"] = ecommerceData.country;
+      if (itemData.image_url || itemData.item_image) {
+        listingData["ImageURL"] = itemData.image_url || itemData.item_image;
+      }
+      listingData["$extra"] = {};
+      if (itemData.start_date || ecommerceData.start_date) {
+        listingData["$extra"]["start_date"] = itemData.start_date || ecommerceData.start_date;
+      }
+      if (itemData.end_date || ecommerceData.end_date) {
+        listingData["$extra"]["end_date"] = itemData.end_date || ecommerceData.end_date;
+      }
+      if (itemData.total_guests)
+        listingData["$extra"]["total_guests"] = itemData.total_guests;
+      if (itemData.adults)
+        listingData["$extra"]["adults"] = itemData.adults;
+      if (itemData.kids)
+        listingData["$extra"]["kids"] = itemData.kids;
+      if (itemData.nights || itemData.quantity)
+        listingData["$extra"]["nights"] = itemData.nights || itemData.quantity;
+      if (itemData.item_category2)
+        listingData["$extra"]["room_type"] = itemData.item_category2;
+      if (itemData.item_variant)
+        listingData["$extra"]["rate_plan"] = itemData.item_variant;
+      if (itemData.item_package_name || itemData.item_package_id) {
+        listingData["$extra"]["package_name"] = itemData.item_package_name;
+        listingData["$extra"]["package_id"] = itemData.item_package_id;
+      }
+      if (ecommerceData.property_id)
+        listingData["$extra"]["property_id"] = ecommerceData.property_id;
+      debugLog("Tracking Viewed Listing:", listingData);
+      klaviyo.track("Viewed Listing", listingData);
+    }
+    function trackStartedCheckout(items, ecommerceData) {
+      debugLog("trackStartedCheckout called with:", { items, ecommerceData });
+      const klaviyo = window.klaviyo || [];
+      let checkoutValue = 0;
+      const checkoutData = {};
+      let totalGuests = 0;
+      if (items && items.length > 0) {
+        for (let i = 0; i < items.length; i++) {
+          const itemPrice = items[i].price || 0;
+          const itemQuantity = items[i].quantity || 1;
+          checkoutValue += itemPrice * itemQuantity;
+          if (items[i].total_guests) {
+            totalGuests += items[i].total_guests;
+          } else if (items[i].adults || items[i].kids) {
+            totalGuests += (items[i].adults || 0) + (items[i].kids || 0);
+          }
+        }
+        checkoutData.Items = items;
+      } else if (ecommerceData.value) {
+        checkoutValue = ecommerceData.value;
+      }
+      checkoutData.$value = parseFloat(checkoutValue.toFixed(2));
+      if (ecommerceData.currency) {
+        checkoutData["Currency"] = ecommerceData.currency;
+      }
+      if (totalGuests > 0) {
+        checkoutData["Number of Guests"] = totalGuests;
+      }
+      if (ecommerceData.start_date || ecommerceData.check_in || ecommerceData.checkin || ecommerceData.check_in_date) {
+        checkoutData["CheckIn"] = ecommerceData.start_date || ecommerceData.check_in || ecommerceData.checkin || ecommerceData.check_in_date;
+      }
+      if (ecommerceData.end_date || ecommerceData.check_out || ecommerceData.checkout || ecommerceData.check_out_date) {
+        checkoutData["CheckOut"] = ecommerceData.end_date || ecommerceData.check_out || ecommerceData.checkout || ecommerceData.check_out_date;
+      }
+      if (ecommerceData.total_guests || ecommerceData.guests || ecommerceData.guest_count) {
+        checkoutData["Number of Guests"] = ecommerceData.total_guests || ecommerceData.guests || ecommerceData.guest_count;
+      }
+      if (items && items.length > 0 && items[0].nights) {
+        checkoutData["Number of Nights"] = items[0].nights;
+      }
+      if (ecommerceData.adults)
+        checkoutData["$extra"]["adults"] = ecommerceData.adults;
+      if (ecommerceData.children || ecommerceData.kids) {
+        checkoutData["$extra"]["children"] = ecommerceData.children || ecommerceData.kids;
+      }
+      if (ecommerceData.rooms || ecommerceData.room_count) {
+        checkoutData["$extra"]["number_of_rooms"] = ecommerceData.rooms || ecommerceData.room_count;
+      }
+      if (checkoutData["CheckIn"] && checkoutData["CheckOut"]) {
+        try {
+          const checkIn = new Date(checkoutData["CheckIn"]);
+          const checkOut = new Date(checkoutData["CheckOut"]);
+          const nights = Math.round((checkOut - checkIn) / (1e3 * 60 * 60 * 24));
+          if (nights > 0) {
+            checkoutData["Number of Nights"] = nights;
+          }
+        } catch (err) {
+          debugLog("Error calculating nights:", err);
+        }
+      }
+      if (items && items.length > 0 && items[0].affiliation) {
+        checkoutData["Property Name"] = items[0].affiliation;
+      } else if (ecommerceData.property_name) {
+        checkoutData["Property Name"] = ecommerceData.property_name;
+      }
+      checkoutData["$extra"] = {};
+      if (ecommerceData.property_id)
+        checkoutData["$extra"]["property_id"] = ecommerceData.property_id;
+      if (ecommerceData.coupon)
+        checkoutData["$extra"]["coupon"] = ecommerceData.coupon;
+      if (ecommerceData.tax)
+        checkoutData["$extra"]["tax"] = ecommerceData.tax;
+      if (ecommerceData.shipping)
+        checkoutData["$extra"]["fees"] = ecommerceData.shipping;
+      if (ecommerceData.be_source)
+        checkoutData["$extra"]["booking_engine_source"] = ecommerceData.be_source;
+      debugLog("Tracking Started Checkout:", checkoutData);
+      klaviyo.track("Started Checkout", checkoutData);
+    }
+    const windowDataLayer = window.dataLayer;
+    if (!windowDataLayer) {
+      debugLog("WARNING: dataLayer not found on window object");
+      return;
+    }
+    debugLog("dataLayer found, setting up listener");
+    const dlPush = windowDataLayer.push;
+    windowDataLayer.push = function() {
+      const args = Array.prototype.slice.call(arguments);
+      debugLog("dataLayer.push called with arguments:", args);
+      dlPush.apply(window.dataLayer, args);
+      let event;
+      for (let i = 0; i < args.length; i++) {
+        if (typeof args[i] === "object") {
+          event = args[i];
+          break;
+        }
+      }
+      if (event) {
+        handleDataLayerPush(event);
+      }
+    };
+    debugLog("Processing existing dataLayer events. Count:", windowDataLayer.length);
+    if (windowDataLayer.length > 0) {
+      for (let i = 0; i < windowDataLayer.length; i++) {
+        if (typeof windowDataLayer[i] === "object") {
+          debugLog("Processing existing event #" + i + ":", windowDataLayer[i]);
+          handleDataLayerPush(windowDataLayer[i]);
+        }
+      }
+    }
+    debugLog("Setup complete");
+    let identifyAttempted = false;
+    function attemptIdentify(source) {
+      const klaviyo = window.klaviyo || [];
+      if (source) {
+        debugLog("attemptIdentify called from:", source);
+      }
+      if (klaviyo.isIdentified && typeof klaviyo.isIdentified === "function") {
+        klaviyo.isIdentified().then(function(isIdentified) {
+          debugLog("klaviyo.isIdentified():", isIdentified);
+          if (isIdentified) {
+            debugLog("User already identified, skipping identification");
+            identifyAttempted = true;
+            return;
+          }
+          debugLog("User not identified, proceeding with identification");
+          performIdentification(source);
+        }).catch(function(err) {
+          debugLog("Error checking isIdentified, proceeding anyway:", err);
+          performIdentification(source);
+        });
+      } else {
+        debugLog("klaviyo.isIdentified not available, proceeding with identification");
+        performIdentification(source);
+      }
+    }
+    function performIdentification(source) {
+      const klaviyo = window.klaviyo || [];
+      const emailField = document.querySelector('input[name="email"]') || document.querySelector('[data-testid="guest-form-email-input"]') || document.querySelector('input[type="email"]');
+      const phoneField = document.querySelector('input[name="phoneNumber"]') || document.querySelector('[data-testid="guest-form-phone-input"]') || document.querySelector('input[type="tel"][name="phoneNumber"]');
+      debugLog("Email field found:", !!emailField);
+      debugLog("Phone field found:", !!phoneField);
+      const email = emailField ? emailField.value.trim() : "";
+      const phone = phoneField ? phoneField.value.trim() : "";
+      debugLog("Email value:", email);
+      debugLog("Phone value:", phone);
+      const hasValidEmail = email && isValidEmail(email);
+      const hasPhone = phone && phone.length > 0;
+      if (!hasValidEmail && email) {
+        debugLog("Email invalid or incomplete:", email);
+      }
+      if ((hasValidEmail || hasPhone) && !identifyAttempted) {
+        const identifyData = {};
+        if (hasValidEmail) {
+          identifyData["email"] = email;
+        }
+        if (hasPhone) {
+          identifyData["phone_number"] = phone;
+        }
+        if (identifyData.email || identifyData.phone_number) {
+          const firstNameField = document.querySelector('input[name="firstName"]') || document.querySelector('[data-testid="guest-form-first-name-input"]') || document.querySelector('input[autocomplete="given-name"]');
+          const lastNameField = document.querySelector('input[name="lastName"]') || document.querySelector('[data-testid="guest-form-last-name-input"]') || document.querySelector('input[autocomplete="family-name"]');
+          if (firstNameField && firstNameField.value.trim()) {
+            identifyData["first_name"] = firstNameField.value.trim();
+          }
+          if (lastNameField && lastNameField.value.trim()) {
+            identifyData["last_name"] = lastNameField.value.trim();
+          }
+          debugLog("Identifying user with:", identifyData);
+          klaviyo.identify(identifyData);
+          identifyAttempted = true;
+          debugLog("Identification complete - no further attempts will be made");
+        }
+      } else if (identifyAttempted) {
+        debugLog("User already identified in this session, skipping");
+      } else {
+        debugLog("No valid email or phone found yet, will retry");
+      }
+    }
+    function startIdentifyMonitoring() {
+      if (identifyAttempted)
+        return;
+      debugLog("Starting guest information monitoring");
+      attemptIdentify("monitoring start");
+      const guestForm = document.getElementById("guest-form") || document.querySelector('form[data-testid="guest-form"]');
+      if (!guestForm) {
+        debugLog("WARNING: Guest form not found, cannot attach listeners");
+        return;
+      }
+      const allInputs = guestForm.querySelectorAll("input, textarea, select");
+      debugLog("Found " + allInputs.length + " form fields to monitor");
+      for (let i = 0; i < allInputs.length; i++) {
+        (function(input) {
+          input.addEventListener("blur", function() {
+            debugLog("Form field blur:", input.name || input.type);
+            setTimeout(function() {
+              attemptIdentify("field blur: " + (input.name || input.type));
+            }, 500);
+          });
+        })(allInputs[i]);
+      }
+      debugLog("Blur listeners attached to all form fields");
+      guestForm.addEventListener("submit", function(e) {
+        debugLog("Form submit detected - final identify attempt");
+        attemptIdentify("form submit");
+      });
+      debugLog("Form submit listener attached");
+    }
+    if (isOnGuestsPage()) {
+      debugLog("Detected guests page, starting monitoring");
+      setTimeout(startIdentifyMonitoring, 1e3);
+    }
+    const originalPush = windowDataLayer.push;
+    const checkForGuestsPage = function() {
+      if (isOnGuestsPage() && !identifyAttempted) {
+        setTimeout(startIdentifyMonitoring, 1e3);
+      }
+    };
+    window.addEventListener("popstate", checkForGuestsPage);
+    debugLog("Guest identification monitoring initialized");
+  })();
+})();

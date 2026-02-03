@@ -6,12 +6,9 @@ GTM tracking script for Klaviyo hotel bookings with modular utilities.
 
 ```
 ├── src/
-│   ├── utils.js                           # Shared utilities (debug mode)
-│   ├── utils-prod.js                      # Shared utilities (production)
-│   ├── klaviyo_hotel_tracking_debug.js    # Main tracking script (debug)
-│   └── klaviyo_hotel_tracking.js          # Main tracking script (production)
-├── klaviyo_hotel_tracking_debug.js        # Built debug version (17.5KB)
-├── klaviyo_hotel_tracking.js              # Built production version (6.1KB, minified)
+│   ├── utils.js                      # Shared utilities
+│   └── klaviyo_hotel_tracking.js     # Main tracking script
+├── klaviyo_hotel_tracking.js         # Built bundle (17.5KB with debug logging)
 └── package.json
 ```
 
@@ -39,10 +36,9 @@ npm install
 
 ### Build Scripts
 
-- `npm run build` - Build debug version (with console logging)
-- `npm run build:prod` - Build production version (minified, no logging)
-- `npm run deploy` - Build debug version and deploy to Surge
-- `npm run watch` - Auto-rebuild debug version on file changes
+- `npm run build` - Build bundled script (with console logging)
+- `npm run deploy` - Build and deploy to Surge
+- `npm run watch` - Auto-rebuild on file changes
 
 ### Adding Utilities
 
@@ -63,17 +59,14 @@ import { myUtility } from './utils.js';
 npm run deploy
 ```
 
-### Production Deployment
+### Disabling Debug Logging
 
-For production, update `src/utils-prod.js` with the same utilities (with `DEBUG = false`), then:
-```bash
-npm run build:prod
-```
+To disable debug logging, set `DEBUG = false` in `src/utils.js` and rebuild.
 
 ## Surge Deployment
 
 Your tracking script is deployed to:
-**https://klaviyo-hotel-debug-1769738861.surge.sh/klaviyo_hotel_tracking_debug.js**
+**https://klaviyo-hotel-debug-1769738861.surge.sh/klaviyo_hotel_tracking.js**
 
 The CNAME file is configured, so you can deploy with:
 ```bash
@@ -97,4 +90,4 @@ The codebase uses **esbuild** to bundle modular ES6 code into a single IIFE (Imm
 - Organized, maintainable code with shared utilities
 - Single output file for easy GTM deployment
 - Fast builds with esbuild
-- Separate debug and production builds
+- Debug logging enabled by default for easier troubleshooting
