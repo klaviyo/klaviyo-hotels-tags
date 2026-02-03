@@ -6,9 +6,12 @@ GTM tracking script for Klaviyo hotel bookings with modular utilities.
 
 ```
 ├── src/
-│   ├── utils.js                      # Shared utilities
-│   └── klaviyo_hotel_tracking.js     # Main tracking script
-├── klaviyo_hotel_tracking.js         # Built bundle (17.5KB with debug logging)
+│   ├── constants.js                  # Event mappings and configuration constants
+│   ├── generalUtils.js               # General utility functions (logging, validation)
+│   ├── gtmUtils.js                   # GTM/dataLayer event handling
+│   ├── klaviyoUtils.js               # Klaviyo payload builders
+│   └── klaviyo_hotel_tracking.js     # Main tracking script (orchestrates everything)
+├── klaviyo_hotel_tracking.js         # Built bundle (16.8KB with debug logging)
 └── package.json
 ```
 
