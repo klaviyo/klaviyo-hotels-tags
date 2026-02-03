@@ -9,6 +9,6 @@
     "watch": "esbuild src/cloudbeds/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_cloudbeds.js --format=iife --watch"
   },
   "devDependencies": {
-    "esbuild": "^0.20.0"
+    "esbuild": "^0.25.0"
   }
 }
