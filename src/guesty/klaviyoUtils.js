@@ -1,260 +1,206 @@
 // Klaviyo-specific utility functions
 
-import { debugLog, isValidEmail } from './generalUtils.js';
-
-// Track if we've already attempted to identify the user
-let identifyAttempted = false;
+import { isValidEmail, isValidPhone, debugLog } from './generalUtils.js';
 
 // Initialize Klaviyo
 const klaviyo = window.klaviyo || [];
 
-// Build payload for Viewed Listing event
-export function buildViewedListingPayload(itemData, ecommerceData) {
-    debugLog('Building Viewed Listing payload');
+// Monitoring account for error tracking
+const MONITORING_ACCOUNT = 'UcwNrH';
+const MONITORING_PROFILE_ID = 'guesty-onsite-monitoring';
 
-    const pricePerNight = itemData.price || 0;
-    const nights = itemData.nights || itemData.quantity || ecommerceData.nights || ecommerceData.quantity || 1;
-    // Calculate total price: price per night * nights
-    const totalPrice = pricePerNight * nights;
+// Track state for checkout event
+let checkoutTracked = false;
+let quoteResponseData = null;
+let totalValue = null;
+let additionalFields = {};
 
-    const payload = {
-        "Title": itemData.item_name || itemData.name || "",
-        "ID": itemData.item_id || itemData.id || "",
-        "Price per Night": pricePerNight,
-        "Total Price": totalPrice,
-        "URL": window.location.href,
-        "Property Name": itemData.affiliation || itemData.item_brand || "",
-        "Property Type": itemData.item_category || "",
-        "$value": totalPrice,
-        "$extra": {
-            "Start Date": itemData.start_date || ecommerceData.start_date || "",
-            "End Date": itemData.end_date || ecommerceData.end_date || "",
-            "Total Guests": itemData.total_guests || ecommerceData.total_guests || "",
-            "Number of Adults": itemData.adults || ecommerceData.adults || "",
-            "Number of Kids": itemData.kids || ecommerceData.kids || "",
-            "Number of Nights": nights,
-            "Package Name": itemData.item_package_name || ecommerceData.item_package_name || "",
-            "Package ID": itemData.item_package_id || ecommerceData.item_package_id || "",
-            "Property ID": ecommerceData.property_id || "",
-        }
-    };
-    debugLog('Viewed Listing payload:', payload);
-    return payload;
+// Store the last viewed listing data for checkout
+let lastViewedListing = null;
+
+export function resetCheckoutState() {
+    checkoutTracked = false;
+    quoteResponseData = null;
+    totalValue = null;
+    additionalFields = {};
 }
 
-// Build payload for Started Checkout event
-export function buildStartedCheckoutPayload(items, ecommerceData) {
-    debugLog('Building Started Checkout payload');
-
-    const { checkoutValue, totalGuests } = getCheckoutValueAndTotalGuests(items, ecommerceData);
-
-    const checkoutPayload = {
-        "$value": checkoutValue,
-        "Currency": ecommerceData.currency || "",
-        "Number of Guests": totalGuests,
-        "CheckIn": ecommerceData.start_date || ecommerceData.check_in || ecommerceData.checkin || ecommerceData.check_in_date || "",
-        "CheckOut": ecommerceData.end_date || ecommerceData.check_out || ecommerceData.checkout || ecommerceData.check_out_date || "",
-        "Property Name": ecommerceData.property_name || (items && items.length > 0 && items[0].affiliation) || "",
-        "$extra": {
-            "Number of Adults": ecommerceData.adults || 1,
-            "Number of Kids": ecommerceData.children || ecommerceData.kids || 0,
-            "Number of Rooms": ecommerceData.rooms || ecommerceData.room_count || 1,
-            "Booking Engine Source": ecommerceData.be_source || "",
-            "Coupon": ecommerceData.coupon || "",
-            "Tax": ecommerceData.tax || 0,
-            "Property ID": ecommerceData.property_id || "",
-        }
-    };
-
-    // Add items if available
-    if (items && items.length > 0) {
-        checkoutPayload.Items = items;
-
-        // Calculate nights from items if available
-        if (items[0].nights) {
-            checkoutPayload["Number of Nights"] = items[0].nights;
-        }
-    }
-
-    // Calculate number of nights from check-in/out dates if not already set
-    if (!checkoutPayload["Number of Nights"] && checkoutPayload["CheckIn"] && checkoutPayload["CheckOut"]) {
-        try {
-            const checkIn = new Date(checkoutPayload["CheckIn"]);
-            const checkOut = new Date(checkoutPayload["CheckOut"]);
-            const nights = Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-            if (nights > 0) {
-                checkoutPayload["Number of Nights"] = nights;
-            }
-        } catch (err) {
-            debugLog('Error calculating nights:', err);
-        }
-    }
-
-    debugLog('Started Checkout payload:', checkoutPayload);
-    return checkoutPayload;
+export function setQuoteData(data, value, fields) {
+    quoteResponseData = data;
+    totalValue = value;
+    additionalFields = fields;
 }
 
-// Calculate checkout value and total guests from items or ecommerce data
-export function getCheckoutValueAndTotalGuests(items, ecommerceData) {
-    let checkoutValue = 0;
-    let totalGuests = 0;
-
-    // Use ecommerce data if available, otherwise calculate from items
-    if (ecommerceData.value) {
-        checkoutValue = ecommerceData.value;
-    } else if (items && items.length > 0) {
-        for (let i = 0; i < items.length; i++) {
-            const itemPrice = items[i].price || 0;
-            const itemQuantity = items[i].quantity || 1;
-            checkoutValue += itemPrice * itemQuantity;
-        }
-    }
-
-    // Use ecommerce guest count if available, otherwise calculate from items
-    if (ecommerceData.total_guests || ecommerceData.guests || ecommerceData.guest_count) {
-        totalGuests = ecommerceData.total_guests || ecommerceData.guests || ecommerceData.guest_count;
-    } else if (items && items.length > 0) {
-        for (let i = 0; i < items.length; i++) {
-            if (items[i].total_guests) {
-                totalGuests += items[i].total_guests;
-            } else if (items[i].adults || items[i].kids) {
-                totalGuests += (items[i].adults || 0) + (items[i].kids || 0);
-            }
-        }
-    }
-
-    return {
-        checkoutValue: parseFloat(checkoutValue.toFixed(2)),
-        totalGuests: totalGuests || 1
-    };
+export function setLastViewedListing(listingData) {
+    lastViewedListing = listingData;
+    debugLog('Stored listing data for checkout:', listingData);
 }
 
-export function trackViewedListing(itemData, ecommerceData) {
-    debugLog('trackViewedListing called with:', { itemData: itemData, ecommerceData: ecommerceData });
-
-    // Skip if no meaningful data
-    if (!itemData || (!itemData.item_name && !itemData.name && !itemData.item_id && !itemData.id)) {
-        debugLog('Skipping Viewed Listing - no item data');
-        return;
-    }
-
-    const listingData = buildViewedListingPayload(itemData, ecommerceData);
-    klaviyo.track("Viewed Listing", listingData).then(() => {
-        debugLog('Viewed Listing tracked');
-    }).catch((err) => {
-        debugLog('Error tracking Viewed Listing:', err);
-    });
+export function getLastViewedListing() {
+    return lastViewedListing;
 }
 
-export function trackStartedCheckout(items, ecommerceData) {
-    debugLog('trackStartedCheckout called with:', { items: items, ecommerceData: ecommerceData });
-
-    const checkoutData = buildStartedCheckoutPayload(items, ecommerceData);
-
-    klaviyo.track("Started Checkout", checkoutData).then(() => {
-        debugLog('Started Checkout tracked');
-    }).catch((err) => {
-        debugLog('Error tracking Started Checkout:', err);
-    });
-}
-// User identification functions
-export function attemptIdentify(source) {
-    if (source) {
-        debugLog('attemptIdentify called from:', source);
-    }
-
-    // Check if user is already identified
-    if (klaviyo.isIdentified && typeof klaviyo.isIdentified === 'function') {
-        klaviyo.isIdentified().then(function(isIdentified) {
-            debugLog('klaviyo.isIdentified():', isIdentified);
-
-            if (isIdentified) {
-                debugLog('User already identified, skipping identification');
-                identifyAttempted = true;
-                return;
-            }
-
-            // User not identified, proceed with identification
-            debugLog('User not identified, proceeding with identification');
-            performIdentification(source);
-        }).catch(function(err) {
-            debugLog('Error checking isIdentified, proceeding anyway:', err);
-            performIdentification(source);
+// Send error alert to monitoring account for critical errors only
+async function sendErrorAlert(eventName, errorCause, errorMessage, customerAccountId) {
+    try {
+        debugLog('Sending critical error alert to monitoring account:', {
+            eventName,
+            errorCause,
+            errorMessage,
+            customerAccountId
         });
-    } else {
-        debugLog('klaviyo.isIdentified not available, proceeding with identification');
-        performIdentification(source);
+
+        // Use fetch to directly call Klaviyo Create Client Event API
+        const response = await fetch(`https://a.klaviyo.com/client/events/?company_id=${MONITORING_ACCOUNT}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                data: {
+                    type: 'event',
+                    attributes: {
+                        profile: {
+                            $external_id: MONITORING_PROFILE_ID,
+                            $first_name: 'Guesty',
+                            $last_name: 'Onsite'
+                        },
+                        metric: {
+                            name: 'Guesty Integration Error'
+                        },
+                        properties: {
+                            'Failed Event': eventName,
+                            'Error Cause': errorCause,
+                            'Error Message': errorMessage || 'Unknown error',
+                            'Customer Account ID': customerAccountId,
+                            'Timestamp': new Date().toISOString(),
+                            'Page URL': window.location.href,
+                            'User Agent': navigator.userAgent
+                        }
+                    }
+                }
+            })
+        });
+
+        if (response.ok) {
+            debugLog('Critical error alert sent successfully');
+        } else {
+            debugLog('Error alert API response failed:', response.status, response.statusText);
+        }
+    } catch (alertError) {
+        debugLog('Failed to send error alert:', alertError);
     }
 }
 
-export function performIdentification(source) {
-    // Try to get email and phone from the form - try multiple selectors
-    const emailField = document.querySelector('input[name="email"]') ||
-                    document.querySelector('[data-testid="guest-form-email-input"]') ||
-                    document.querySelector('input[type="email"]');
+export function trackViewedListingOrCheckout(eventName, responseData, value, additionalFieldsParam) {
+    let listingData = {
+        "Title": responseData.title,
+        "ID": responseData._id,
+        "Tags": responseData.tags,
+        "ImageURL": responseData.picture?.thumbnail || "",
+        "Property Type": responseData.propertyType,
+        "URL": window.location.href,
+        "Listing City": responseData.address?.city || "",
+        "Listing Country": responseData.address?.country || "",
+        "Price": responseData.prices?.basePrice,
+        "Amenities": responseData.amenities,
+        "Listing Timezone": responseData.timezone,
+        "$extra": {
+            "prices": responseData.prices,
+            "reviews": responseData.reviews,
+            "taxes": responseData.taxes,
+            "images": responseData.pictures,
+            "bedrooms": responseData.bedrooms,
+            "bathrooms": responseData.bathrooms
+        }
+    };
 
-    const phoneField = document.querySelector('input[name="phoneNumber"]') ||
-                    document.querySelector('[data-testid="guest-form-phone-input"]') ||
-                    document.querySelector('input[type="tel"][name="phoneNumber"]');
-
-    debugLog('Email field found:', !!emailField);
-    debugLog('Phone field found:', !!phoneField);
-
-    const email = emailField ? emailField.value.trim() : '';
-    const phone = phoneField ? phoneField.value.trim() : '';
-
-    debugLog('Email value:', email);
-    debugLog('Phone value:', phone);
-
-    // Validate email if present
-    const hasValidEmail = email && isValidEmail(email);
-    const hasPhone = phone && phone.length > 0;
-
-    if (!hasValidEmail && email) {
-        debugLog('Email invalid or incomplete:', email);
+    if (additionalFieldsParam && Object.keys(additionalFieldsParam).length) {
+        Object.assign(listingData, additionalFieldsParam);
     }
 
-    // Only identify if we have valid email or phone
-    if ((hasValidEmail || hasPhone) && !identifyAttempted) {
-        const identifyData = {};
-
-        if (hasValidEmail) {
-            identifyData['email'] = email;
-        }
-
-        if (hasPhone) {
-            identifyData['phone_number'] = phone;
-        }
-
-        // Only proceed if we have at least valid email or phone
-        if (identifyData.email || identifyData.phone_number) {
-            // Try to get first and last name if available
-            const firstNameField = document.querySelector('input[name="firstName"]') ||
-                                document.querySelector('[data-testid="guest-form-first-name-input"]') ||
-                                document.querySelector('input[autocomplete="given-name"]');
-
-            const lastNameField = document.querySelector('input[name="lastName"]') ||
-                               document.querySelector('[data-testid="guest-form-last-name-input"]') ||
-                               document.querySelector('input[autocomplete="family-name"]');
-
-            if (firstNameField && firstNameField.value.trim()) {
-                identifyData['first_name'] = firstNameField.value.trim();
-            }
-
-            if (lastNameField && lastNameField.value.trim()) {
-                identifyData['last_name'] = lastNameField.value.trim();
-            }
-
-            debugLog('Identifying user with:', identifyData);
-            klaviyo.identify(identifyData);
-
-            // Mark as attempted - never try again
-            identifyAttempted = true;
-            debugLog('Identification complete - no further attempts will be made');
-        }
-    } else if (identifyAttempted) {
-        debugLog('User already identified in this session, skipping');
-    } else {
-        debugLog('No valid email or phone found yet, will retry');
+    if (value) {
+        listingData["$value"] = value;
     }
+
+    // Get customer account ID for error reporting
+    let customerAccountId = 'unknown';
+    try {
+        if (klaviyo.account && typeof klaviyo.account === 'function') {
+            customerAccountId = klaviyo.account();
+        }
+    } catch (e) {
+        debugLog('Could not get account ID:', e);
+    }
+
+    klaviyo.isIdentified().then(res => {
+        if (res) {
+            debugLog(`Tracking Klaviyo Event - ${eventName}: `, listingData);
+        } else {
+            debugLog(`Klaviyo Event - ${eventName} - tracked to local storage, user is not identified yet`);
+        }
+    }).catch(err => {
+        debugLog(`Error checking identification status for ${eventName}:`, err);
+    });
+
+    // Track event and monitor for critical failures
+    try {
+        klaviyo.track(`${eventName}`, listingData).then(res => {
+            klaviyo.isIdentified().then(result => {
+                if (result) {
+                    debugLog(`Klaviyo Event - ${eventName} - Success: ${res}`);
+                }
+            });
+        }).catch(err => {
+            // Critical error: event tracking failed
+            debugLog(`CRITICAL: Error tracking ${eventName}:`, err);
+            const errorCause = 'klaviyo.track() promise rejected';
+            sendErrorAlert(eventName, errorCause, err.message || err.toString(), customerAccountId);
+        });
+    } catch (err) {
+        // Critical error: event tracking threw exception
+        debugLog(`CRITICAL: Exception tracking ${eventName}:`, err);
+        const errorCause = 'klaviyo.track() threw exception';
+        sendErrorAlert(eventName, errorCause, err.message || err.toString(), customerAccountId);
+    }
+}
+
+export function trackStartedCheckoutOnce() {
+    if (checkoutTracked || !quoteResponseData) return;
+    checkoutTracked = true;
+    trackViewedListingOrCheckout("Started Checkout", quoteResponseData, totalValue, additionalFields);
+}
+
+export function setupCheckoutIdentifyListeners() {
+    let emailField = document.querySelector("input[name='email']");
+    let phoneNumber = document.querySelector("input[name='phone']");
+    let firstName = document.querySelector("input[name='firstName']");
+    let lastName = document.querySelector("input[name='lastName']");
+
+    function handleUserInput() {
+        const user = {
+            "email": emailField?.value.trim() || "",
+            "phone_number": phoneNumber?.value || "",
+            "first_name": firstName?.value || "",
+            "last_name": lastName?.value || "",
+        };
+
+        const validEmail = isValidEmail(user.email);
+        const validPhone = isValidPhone(user.phone_number);
+
+        if (validEmail || validPhone) {
+            klaviyo.identify(user).then(() => {
+                debugLog("Identified Klaviyo User!");
+                trackStartedCheckoutOnce();
+            }).catch(err => {
+                // Non-critical: identification failed but events can still be tracked
+                debugLog("Error identifying user:", err);
+            });
+        } else {
+            debugLog("Neither valid email nor phone entered yet", { validEmail, validPhone });
+        }
+    }
+
+    phoneNumber?.addEventListener("blur", handleUserInput);
+    emailField?.addEventListener("blur", handleUserInput);
 }
