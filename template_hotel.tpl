@@ -18,7 +18,7 @@ ___INFO___
     "id": "brand_dummy",
     "displayName": ""
   },
-  "description": "[DEBUGGING] Klaviyo Hotel Template for Mews and Cloudbeds",
+  "description": "[DEBUGGING] Klaviyo Hotel Template for Mews, Cloudbeds, and Guesty",
   "containerContexts": [
     "WEB"
   ]
@@ -50,7 +50,7 @@ ___TEMPLATE_PARAMETERS___
     "type": "SELECT",
     "name": "hotel_type",
     "displayName": "Which hotel PMS (Property Management System) do you use?",
-    "macrosInSelect": true,
+    "macrosInSelect": false,
     "selectItems": [
       {
         "value": "cloudbeds",
@@ -59,11 +59,15 @@ ___TEMPLATE_PARAMETERS___
       {
         "value": "mews",
         "displayValue": "Mews"
+      },
+      {
+        "value": "guesty",
+        "displayValue": "Guesty"
       }
     ],
     "simpleValueType": true,
     "alwaysInSummary": true,
-    "help": "Only customers using the booking engines for Mews and Cloudbeds are supported today."
+    "help": "Only customers using the booking engines for Mews, Guesty and Cloudbeds are supported today."
   }
 ]
 
@@ -88,11 +92,23 @@ const injectScript = require('injectScript');
           data.gtmOnFailure();
         }
       );
-    } else {
+    } else if (data.hotel_type == "mews"){
       injectScript(
         'https://klaviyo-hotel-mews.surge.sh/klaviyo_hotel_tracking_mews.js',
         function() {
           log('Mews tracking script loaded successfully');
+          data.gtmOnSuccess();
+        },
+        function() {
+          log('Hotel tracking script FAILED to load');
+          data.gtmOnFailure();
+        }
+      );
+    } else {
+      injectScript(
+        'https://klaviyo-hotel-guesty.surge.sh/klaviyo_hotel_tracking_guesty.js',
+        function() {
+          log('Guesty tracking script loaded successfully');
           data.gtmOnSuccess();
         },
         function() {
@@ -147,6 +163,10 @@ ___WEB_PERMISSIONS___
               {
                 "type": 1,
                 "string": "https://klaviyo-hotel-mews.surge.sh/*"
+              },
+              {
+                "type": 1,
+                "string": "https://klaviyo-hotel-guesty.surge.sh/*"
               }
             ]
           }
@@ -186,6 +206,6 @@ scenarios: []
 
 ___NOTES___
 
-Created on 2/4/2026, 12:09:26 PM
+Created on 2/4/2026, 5:57:46 PM
 
 
