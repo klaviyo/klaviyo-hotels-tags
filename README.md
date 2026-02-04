@@ -1,24 +1,28 @@
 # Klaviyo Hotel Tracking
 
-GTM tracking script for Klaviyo hotel bookings with modular utilities.
+GTM tracking scripts for Klaviyo hotel bookings with modular utilities. Supports both Cloudbeds and Mews booking engines.
 
 ## Project Structure
 
 ```
 ├── src/
-│   ├── constants.js                  # Event mappings and configuration constants
-│   ├── generalUtils.js               # General utility functions (logging, validation)
-│   ├── gtmUtils.js                   # GTM/dataLayer event handling
-│   ├── klaviyoUtils.js               # Klaviyo payload builders
-│   └── klaviyo_hotel_tracking.js     # Main tracking script (orchestrates everything)
-├── klaviyo_hotel_tracking.js         # Built bundle (16.8KB with debug logging)
+│   ├── cloudbeds/
+│   │   ├── generalUtils.js           # General utility functions (logging, validation)
+│   │   ├── gtmUtils.js               # GTM/dataLayer event handling
+│   │   ├── klaviyoUtils.js           # Klaviyo payload builders
+│   │   └── klaviyo_hotel_tracking.js # Main Cloudbeds tracking script
+│   └── mews/
+│       ├── generalUtils.js           # General utility functions (logging, validation)
+│       ├── klaviyoUtils.js           # Klaviyo payload builders
+│       └── klaviyo_hotel_tracking.js # Main Mews tracking script
+├── klaviyo_hotel_tracking_cloudbeds.js  # Built Cloudbeds bundle
+├── klaviyo_hotel_tracking_mews.js       # Built Mews bundle
 └── package.json
 ```
 
 ## Events Tracked
 
-This script tracks the following Klaviyo events:
-
+### Cloudbeds
 1. **Viewed Listing** - Triggered by:
    - `cb_booking_engine_load` (Cloudbeds booking engine load)
    - `view_item` (GA4 view item event)
@@ -27,6 +31,11 @@ This script tracks the following Klaviyo events:
 2. **Started Checkout** - Triggered by:
    - `begin_checkout` (GA4 checkout event)
    - Also attempts to identify user from guest form fields (email/phone)
+
+### Mews
+1. **Viewed Listing** - Triggered when user views available rooms
+2. **Started Checkout** - Triggered when user begins the checkout process
+3. **Placed Order** - Triggered when booking is completed
 
 ## Setup
 
@@ -39,13 +48,20 @@ npm install
 
 ### Build Scripts
 
-- `npm run build` - Build bundled script (with console logging)
-- `npm run deploy` - Build and deploy to Surge
-- `npm run watch` - Auto-rebuild on file changes
+- `npm run build` - Build both Cloudbeds and Mews scripts
+- `npm run build:cloudbeds` - Build only Cloudbeds script
+- `npm run build:mews` - Build only Mews script
+- `npm run watch` - Auto-rebuild Cloudbeds on file changes
+- `npm run watch:mews` - Auto-rebuild Mews on file changes
+
+### Deployment Scripts
+
+- `npm run deploy:cloudbeds` - Build and deploy Cloudbeds to Surge
+- `npm run deploy:mews` - Build and deploy Mews to Surge
 
 ### Adding Utilities
 
-1. Add your utility function to `src/utils.js`:
+1. Add your utility function to the appropriate utils file (`src/cloudbeds/generalUtils.js` or `src/mews/generalUtils.js`):
 ```javascript
 export function myUtility() {
     // Your code here
@@ -54,31 +70,30 @@ export function myUtility() {
 
 2. Import it in your tracking file:
 ```javascript
-import { myUtility } from './utils.js';
+import { myUtility } from './generalUtils.js';
 ```
 
 3. Build and deploy:
 ```bash
-npm run deploy
+npm run deploy:cloudbeds
+# or
+npm run deploy:mews
 ```
-
-### Disabling Debug Logging
-
-To disable debug logging, set `DEBUG = false` in `src/utils.js` and rebuild.
 
 ## Surge Deployment
 
-Your tracking script is deployed to:
-**https://klaviyo-hotel-debug-1769738861.surge.sh/klaviyo_hotel_tracking.js**
+Your tracking scripts are deployed to:
 
-The CNAME file is configured, so you can deploy with:
-```bash
-surge
-```
+**Cloudbeds:**
+https://klaviyo-hotel-cloudbeds.surge.sh/klaviyo_hotel_tracking_cloudbeds.js
 
-Or use the npm script:
+**Mews:**
+https://klaviyo-hotel-mews.surge.sh/klaviyo_hotel_tracking_mews.js
+
+Deploy with:
 ```bash
-npm run deploy
+npm run deploy:cloudbeds
+npm run deploy:mews
 ```
 
 ## Using in GTM
