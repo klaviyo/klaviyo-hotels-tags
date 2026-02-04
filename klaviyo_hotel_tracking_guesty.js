@@ -1,5 +1,5 @@
 (() => {
-  // src/cloudbeds/constants.js
+  // src/guesty/constants.js
   var DEBUG = true;
   var KLAVIYO_EVENT_KEY_MAP = {
     "view_item": "Viewed Listing",
@@ -8,7 +8,7 @@
     "begin_checkout": "Started Checkout"
   };
 
-  // src/cloudbeds/klaviyoUtils.js
+  // src/guesty/klaviyoUtils.js
   var identifyAttempted = false;
   var klaviyo = window.klaviyo || [];
   function buildViewedListingPayload(itemData, ecommerceData) {
@@ -197,7 +197,7 @@
     }
   }
 
-  // src/cloudbeds/generalUtils.js
+  // src/guesty/generalUtils.js
   function debugLog(message, data) {
     if (DEBUG) {
       console.log("[Klaviyo Hotel Tracking] " + message, data || "");
@@ -240,7 +240,7 @@
     debugLog("Form submit listener attached");
   }
 
-  // src/cloudbeds/gtmUtils.js
+  // src/guesty/gtmUtils.js
   function parseEventData(event) {
     let eventName, ecommerceData, ecommerceItems, isGA4Event = false, isGtagEvent = false;
     if (event.length && event[0] === "event" && typeof event[1] === "string") {
@@ -335,7 +335,7 @@
     }
   }
 
-  // src/cloudbeds/klaviyo_hotel_tracking.js
+  // src/guesty/klaviyo_hotel_tracking.js
   (function() {
     debugLog("Script initialized");
     const windowDataLayer = window.dataLayer;

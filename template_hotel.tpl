@@ -76,7 +76,7 @@ const injectScript = require('injectScript');
 
   function initialiseKlaviyoTracking(){
     log('Klaviyo JS loaded, now loading hotel tracking script');
-    if (data.account_type == "cloudbeds"){
+    if (data.hotel_type == "cloudbeds"){
       injectScript(
         'https://klaviyo-hotel-cloudbeds.surge.sh/klaviyo_hotel_tracking_cloudbeds.js',
         function() {
@@ -142,7 +142,7 @@ ___WEB_PERMISSIONS___
               },
               {
                 "type": 1,
-                "string": "https://klaviyo-hotel-debug-1769738861.surge.sh/*"
+                "string": "https://klaviyo-hotel-cloudbeds.surge.sh/*"
               },
               {
                 "type": 1,
