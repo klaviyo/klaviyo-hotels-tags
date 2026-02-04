@@ -124,14 +124,9 @@ npm run deploy:guesty
 
 ## Usage
 
-### Cloudbeds & Mews (GTM-based)
 Add the script URL to your GTM Tag Template. See .tpl file for more info.
 
-### Guesty (Direct Implementation)
-Guesty uses network interception (fetch/XHR) instead of GTM. Add the script directly to your site:
-```html
-<script src="https://klaviyo-hotel-guesty.surge.sh/klaviyo_hotel_tracking_guesty.js"></script>
-```
+**Note:** While Cloudbeds and Mews listen to GTM dataLayer events, Guesty uses network interception (fetch/XHR) to track events directly from API calls.
 
 ## Architecture
 
