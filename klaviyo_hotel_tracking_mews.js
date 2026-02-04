@@ -11,6 +11,7 @@
   var identifyAttempted = false;
   var reservationData = null;
   var viewItemData = null;
+  var klaviyo = window.klaviyo || [];
   function setReservationData(data) {
     reservationData = data;
     debugLog("Stored reservation data:", data);
@@ -19,61 +20,93 @@
     viewItemData = { itemData, ecommerceData };
     debugLog("Stored view_item data:", viewItemData);
   }
-  function buildViewedListingPayload(itemData, ecommerceData) {
-    debugLog("Building Viewed Listing payload");
-    let roomData = itemData;
-    let eventData = ecommerceData;
-    if (itemData.startDate && viewItemData) {
-      debugLog("Using stored view_item data for room details");
-      roomData = viewItemData.itemData;
-      eventData = viewItemData.ecommerceData;
-      roomData = {
-        ...roomData,
-        start_date: itemData.startDate,
-        end_date: itemData.endDate
-      };
-      eventData = {
-        ...eventData,
-        ...ecommerceData,
-        // Include any data from distributorRoomAdded event
-        start_date: itemData.startDate,
-        end_date: itemData.endDate
-      };
+  function calculateNights(startDate, endDate) {
+    if (!startDate || !endDate)
+      return null;
+    try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const nights = Math.round((end - start) / (1e3 * 60 * 60 * 24));
+      return nights > 0 ? nights : null;
+    } catch (err) {
+      debugLog("Error calculating nights:", err);
+      return null;
     }
-    const totalValue = eventData.value || (roomData.price || 0) * (roomData.quantity || 1);
-    const startDate = roomData.start_date || eventData.start_date || "";
-    const endDate = roomData.end_date || eventData.end_date || "";
-    let nights = roomData.nights || roomData.quantity || eventData.nights || eventData.quantity;
-    if (!nights && startDate && endDate) {
-      try {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        nights = Math.round((end - start) / (1e3 * 60 * 60 * 24));
-      } catch (err) {
-        debugLog("Error calculating nights:", err);
-      }
-    }
+  }
+  function getGuestCount(itemData) {
     const occupancy = itemData.occupancyData && itemData.occupancyData.length > 0 ? itemData.occupancyData[0] : null;
-    const guests = occupancy ? occupancy.personCount : reservationData ? reservationData.guests : "";
-    const payload = {
-      "Title": roomData.item_name || roomData.name || "",
-      "ID": roomData.item_id || roomData.id || itemData.roomId || "",
-      "Price": roomData.price || 0,
+    return occupancy ? occupancy.personCount : reservationData ? reservationData.guests : "";
+  }
+  function buildViewedListingFromViewItem(itemData, ecommerceData) {
+    debugLog("Building Viewed Listing from view_item event");
+    const pricePerNight = itemData.price || 0;
+    const startDate = itemData.start_date || ecommerceData.start_date || "";
+    const endDate = itemData.end_date || ecommerceData.end_date || "";
+    const nights = itemData.nights || itemData.quantity || ecommerceData.nights || ecommerceData.quantity || calculateNights(startDate, endDate) || 1;
+    const totalPrice = pricePerNight * nights;
+    const guests = getGuestCount(itemData);
+    return {
+      "Title": itemData.item_name || itemData.name || "",
+      "ID": itemData.item_id || itemData.id || "",
+      "Price per Night": pricePerNight,
+      "Total Price": totalPrice,
       "URL": window.location.href,
-      "Property Name": roomData.item_category2 || roomData.affiliation || ecommerceData.hotelName || "",
-      "Location": roomData.item_category3 || "",
-      "$value": totalValue,
+      "Property Name": itemData.item_category2 || itemData.affiliation || ecommerceData.hotelName || "",
+      "Location": itemData.item_category3 || "",
+      "$value": totalPrice,
       "$extra": {
         "Start Date": startDate,
         "End Date": endDate,
         "Total Guests": guests,
         "Number of Adults": guests,
         "Number of Kids": 0,
-        "Number of Nights": nights || "",
-        "Property ID": roomData.enterpriseId || ecommerceData.hotelId || "",
+        "Number of Nights": nights,
+        "Brand": itemData.item_brand || ""
+      }
+    };
+  }
+  function buildViewedListingFromDistributorRoomAdded(reservationItem, ecommerceData) {
+    debugLog("Building Viewed Listing from distributorRoomAdded event");
+    if (!viewItemData) {
+      debugLog("Warning: No view_item data stored for distributorRoomAdded event");
+      return null;
+    }
+    const roomData = viewItemData.itemData;
+    const viewEventData = viewItemData.ecommerceData;
+    const pricePerNight = roomData.price || 0;
+    const startDate = reservationItem.startDate || "";
+    const endDate = reservationItem.endDate || "";
+    const nights = calculateNights(startDate, endDate) || 1;
+    const totalPrice = pricePerNight * nights;
+    const guests = getGuestCount(reservationItem);
+    return {
+      "Title": roomData.item_name || roomData.name || "",
+      "ID": roomData.item_id || roomData.id || reservationItem.roomId || "",
+      "Price per Night": pricePerNight,
+      "Total Price": totalPrice,
+      "URL": window.location.href,
+      "Property Name": roomData.item_category2 || roomData.affiliation || ecommerceData.hotelName || viewEventData.hotelName || "",
+      "Location": roomData.item_category3 || "",
+      "$value": totalPrice,
+      "$extra": {
+        "Start Date": startDate,
+        "End Date": endDate,
+        "Total Guests": guests,
+        "Number of Adults": guests,
+        "Number of Kids": 0,
+        "Number of Nights": nights,
         "Brand": roomData.item_brand || ""
       }
     };
+  }
+  function buildViewedListingPayload(itemData, ecommerceData) {
+    debugLog("Building Viewed Listing payload");
+    let payload;
+    if (itemData.startDate) {
+      payload = buildViewedListingFromDistributorRoomAdded(itemData, ecommerceData);
+    } else {
+      payload = buildViewedListingFromViewItem(itemData, ecommerceData);
+    }
     debugLog("Viewed Listing payload:", payload);
     return payload;
   }
@@ -153,7 +186,6 @@
   }
   function trackViewedListing(itemData, ecommerceData) {
     debugLog("trackViewedListing called with:", { itemData, ecommerceData });
-    const klaviyo = window.klaviyo || [];
     const hasItemData = itemData && (itemData.item_name || itemData.name || itemData.item_id || itemData.id);
     const hasReservationData = itemData && (itemData.roomId || itemData.startDate);
     if (!hasItemData && !hasReservationData) {
@@ -169,7 +201,6 @@
   }
   function trackStartedCheckout(items, ecommerceData) {
     debugLog("trackStartedCheckout called with:", { items, ecommerceData });
-    const klaviyo = window.klaviyo || [];
     const checkoutData = buildStartedCheckoutPayload(items, ecommerceData);
     klaviyo.track("Started Checkout", checkoutData).then(() => {
       debugLog("Started Checkout tracked");
@@ -178,7 +209,6 @@
     });
   }
   function attemptIdentify(source) {
-    const klaviyo = window.klaviyo || [];
     if (source) {
       debugLog("attemptIdentify called from:", source);
     }
@@ -202,7 +232,6 @@
     }
   }
   function performIdentification(source) {
-    const klaviyo = window.klaviyo || [];
     const iframe = document.querySelector("iframe.mews-distributor") || document.querySelector('iframe[name*="mews-distributor"]');
     let searchDoc = document;
     if (iframe) {
@@ -295,6 +324,7 @@
     return emailRegex.test(email);
   }
   function isOnGuestsPage() {
+    debugLog("Checking if on guests page", window.location.href);
     return window.location.href.indexOf("/contact-details") > -1 || window.location.href.indexOf("/checkout") > -1 || document.getElementById("contact-details");
   }
   function startIdentifyMonitoring() {
@@ -532,9 +562,9 @@
       debugLog("Missing email or identify handler");
       return;
     }
-    const klaviyo = window.klaviyo || [];
-    if (klaviyo.isIdentified && typeof klaviyo.isIdentified === "function") {
-      klaviyo.isIdentified().then(function(isIdentified) {
+    const klaviyo2 = window.klaviyo || [];
+    if (klaviyo2.isIdentified && typeof klaviyo2.isIdentified === "function") {
+      klaviyo2.isIdentified().then(function(isIdentified) {
         if (isIdentified) {
           debugLog("User already identified via Klaviyo, skipping");
           return;
@@ -549,7 +579,7 @@
     }
   }
   function performIdentifyFromEvent(email, fullName) {
-    const klaviyo = window.klaviyo || [];
+    const klaviyo2 = window.klaviyo || [];
     const identifyData = { email };
     if (fullName) {
       const nameParts = fullName.trim().split(" ");
@@ -561,14 +591,13 @@
       }
     }
     debugLog("Identifying user from event data:", identifyData);
-    klaviyo.identify(identifyData);
+    klaviyo2.identify(identifyData);
   }
 
   // src/mews/klaviyo_hotel_tracking.js
   (function() {
     debugLog("Script initialized");
     const windowDataLayer = window.dataLayer;
-    const klaviyo = window.klaviyo || [];
     if (!windowDataLayer) {
       debugLog("WARNING: dataLayer not found on window object");
       return;

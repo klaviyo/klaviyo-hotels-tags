@@ -10,24 +10,28 @@
 
   // src/cloudbeds/klaviyoUtils.js
   var identifyAttempted = false;
+  var klaviyo = window.klaviyo || [];
   function buildViewedListingPayload(itemData, ecommerceData) {
     debugLog("Building Viewed Listing payload");
-    const totalValue = ecommerceData.value || (itemData.price || 0) * (itemData.quantity || 1);
+    const pricePerNight = itemData.price || 0;
+    const nights = itemData.nights || itemData.quantity || ecommerceData.nights || ecommerceData.quantity || 1;
+    const totalPrice = pricePerNight * nights;
     const payload = {
       "Title": itemData.item_name || itemData.name || "",
       "ID": itemData.item_id || itemData.id || "",
-      "Price": itemData.price || 0,
+      "Price per Night": pricePerNight,
+      "Total Price": totalPrice,
       "URL": window.location.href,
       "Property Name": itemData.affiliation || itemData.item_brand || "",
       "Property Type": itemData.item_category || "",
-      "$value": totalValue,
+      "$value": totalPrice,
       "$extra": {
         "Start Date": itemData.start_date || ecommerceData.start_date || "",
         "End Date": itemData.end_date || ecommerceData.end_date || "",
         "Total Guests": itemData.total_guests || ecommerceData.total_guests || "",
         "Number of Adults": itemData.adults || ecommerceData.adults || "",
         "Number of Kids": itemData.kids || ecommerceData.kids || "",
-        "Number of Nights": itemData.nights || itemData.quantity || ecommerceData.nights || ecommerceData.quantity || "",
+        "Number of Nights": nights,
         "Package Name": itemData.item_package_name || ecommerceData.item_package_name || "",
         "Package ID": itemData.item_package_id || ecommerceData.item_package_id || "",
         "Property ID": ecommerceData.property_id || ""
@@ -107,7 +111,6 @@
   }
   function trackViewedListing(itemData, ecommerceData) {
     debugLog("trackViewedListing called with:", { itemData, ecommerceData });
-    const klaviyo = window.klaviyo || [];
     if (!itemData || !itemData.item_name && !itemData.name && !itemData.item_id && !itemData.id) {
       debugLog("Skipping Viewed Listing - no item data");
       return;
@@ -121,7 +124,6 @@
   }
   function trackStartedCheckout(items, ecommerceData) {
     debugLog("trackStartedCheckout called with:", { items, ecommerceData });
-    const klaviyo = window.klaviyo || [];
     const checkoutData = buildStartedCheckoutPayload(items, ecommerceData);
     klaviyo.track("Started Checkout", checkoutData).then(() => {
       debugLog("Started Checkout tracked");
@@ -130,7 +132,6 @@
     });
   }
   function attemptIdentify(source) {
-    const klaviyo = window.klaviyo || [];
     if (source) {
       debugLog("attemptIdentify called from:", source);
     }
@@ -154,7 +155,6 @@
     }
   }
   function performIdentification(source) {
-    const klaviyo = window.klaviyo || [];
     const emailField = document.querySelector('input[name="email"]') || document.querySelector('[data-testid="guest-form-email-input"]') || document.querySelector('input[type="email"]');
     const phoneField = document.querySelector('input[name="phoneNumber"]') || document.querySelector('[data-testid="guest-form-phone-input"]') || document.querySelector('input[type="tel"][name="phoneNumber"]');
     debugLog("Email field found:", !!emailField);

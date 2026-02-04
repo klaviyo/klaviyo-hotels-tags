@@ -3,14 +3,17 @@
   "version": "1.0.0",
   "description": "Klaviyo hotel tracking for GTM",
   "scripts": {
-    "build": "npm run build:cloudbeds && npm run build:mews",
+    "build": "npm run build:cloudbeds && npm run build:mews && npm run build:guesty",
     "build:cloudbeds": "esbuild src/cloudbeds/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_cloudbeds.js --format=iife",
     "build:mews": "esbuild src/mews/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_mews.js --format=iife",
+    "build:guesty": "esbuild src/guesty/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_guesty.js --format=iife",
     "deploy": "npm run build && surge",
-    "deploy:cloudbeds": "npm run build:cloudbeds && surge . klaviyo-hotel-debug-1769738861.surge.sh",
+    "deploy:cloudbeds": "npm run build:cloudbeds && surge . klaviyo-hotel-cloudbeds.surge.sh",
     "deploy:mews": "npm run build:mews && surge . klaviyo-hotel-mews.surge.sh",
+    "deploy:guesty": "npm run build:guesty && surge . klaviyo-hotel-guesty.surge.sh",
     "watch": "esbuild src/cloudbeds/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_cloudbeds.js --format=iife --watch",
-    "watch:mews": "esbuild src/mews/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_mews.js --format=iife --watch"
+    "watch:mews": "esbuild src/mews/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_mews.js --format=iife --watch",
+    "watch:guesty": "esbuild src/guesty/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_guesty.js --format=iife --watch"
   },
   "devDependencies": {
     "esbuild": "^0.25.0"
