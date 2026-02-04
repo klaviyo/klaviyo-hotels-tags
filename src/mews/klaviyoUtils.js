@@ -11,6 +11,9 @@ let reservationData = null;
 // Store view_item data for later enrichment
 let viewItemData = null;
 
+// Initialize Klaviyo
+const klaviyo = window.klaviyo || [];
+
 export function setReservationData(data) {
     reservationData = data;
     debugLog('Stored reservation data:', data);
@@ -198,8 +201,6 @@ export function getCheckoutValueAndTotalGuests(items, ecommerceData) {
 export function trackViewedListing(itemData, ecommerceData) {
     debugLog('trackViewedListing called with:', { itemData: itemData, ecommerceData: ecommerceData });
 
-    const klaviyo = window.klaviyo || [];
-
     // Skip if no meaningful data
     // Accept either regular item data OR reservation data (from distributorRoomAdded)
     const hasItemData = itemData && (itemData.item_name || itemData.name || itemData.item_id || itemData.id);
@@ -221,7 +222,6 @@ export function trackViewedListing(itemData, ecommerceData) {
 export function trackStartedCheckout(items, ecommerceData) {
     debugLog('trackStartedCheckout called with:', { items: items, ecommerceData: ecommerceData });
 
-    const klaviyo = window.klaviyo || [];
     const checkoutData = buildStartedCheckoutPayload(items, ecommerceData);
 
     klaviyo.track("Started Checkout", checkoutData).then(() => {
@@ -232,7 +232,6 @@ export function trackStartedCheckout(items, ecommerceData) {
 }
 // User identification functions
 export function attemptIdentify(source) {
-    const klaviyo = window.klaviyo || [];
 
     if (source) {
         debugLog('attemptIdentify called from:', source);
@@ -263,7 +262,6 @@ export function attemptIdentify(source) {
 }
 
 export function performIdentification(source) {
-    const klaviyo = window.klaviyo || [];
 
     // Find the Mews iframe and get its document
     const iframe = document.querySelector('iframe.mews-distributor') ||

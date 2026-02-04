@@ -19,6 +19,7 @@ export function isValidEmail(email) {
 
 // Check if on guests/contact details page (Mews checkout)
 export function isOnGuestsPage() {
+    debugLog('Checking if on guests page', window.location.href);
     return window.location.href.indexOf('/contact-details') > -1 ||
            window.location.href.indexOf('/checkout') > -1 ||
            document.getElementById('contact-details');

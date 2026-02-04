@@ -5,6 +5,9 @@ import { debugLog, isValidEmail } from './generalUtils.js';
 // Track if we've already attempted to identify the user
 let identifyAttempted = false;
 
+// Initialize Klaviyo
+const klaviyo = window.klaviyo || [];
+
 // Build payload for Viewed Listing event
 export function buildViewedListingPayload(itemData, ecommerceData) {
     debugLog('Building Viewed Listing payload');
@@ -126,8 +129,6 @@ export function getCheckoutValueAndTotalGuests(items, ecommerceData) {
 export function trackViewedListing(itemData, ecommerceData) {
     debugLog('trackViewedListing called with:', { itemData: itemData, ecommerceData: ecommerceData });
 
-    const klaviyo = window.klaviyo || [];
-
     // Skip if no meaningful data
     if (!itemData || (!itemData.item_name && !itemData.name && !itemData.item_id && !itemData.id)) {
         debugLog('Skipping Viewed Listing - no item data');
@@ -145,7 +146,6 @@ export function trackViewedListing(itemData, ecommerceData) {
 export function trackStartedCheckout(items, ecommerceData) {
     debugLog('trackStartedCheckout called with:', { items: items, ecommerceData: ecommerceData });
 
-    const klaviyo = window.klaviyo || [];
     const checkoutData = buildStartedCheckoutPayload(items, ecommerceData);
 
     klaviyo.track("Started Checkout", checkoutData).then(() => {
@@ -156,8 +156,6 @@ export function trackStartedCheckout(items, ecommerceData) {
 }
 // User identification functions
 export function attemptIdentify(source) {
-    const klaviyo = window.klaviyo || [];
-
     if (source) {
         debugLog('attemptIdentify called from:', source);
     }
@@ -187,8 +185,6 @@ export function attemptIdentify(source) {
 }
 
 export function performIdentification(source) {
-    const klaviyo = window.klaviyo || [];
-
     // Try to get email and phone from the form - try multiple selectors
     const emailField = document.querySelector('input[name="email"]') ||
                     document.querySelector('[data-testid="guest-form-email-input"]') ||

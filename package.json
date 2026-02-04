@@ -7,7 +7,7 @@
     "build:cloudbeds": "esbuild src/cloudbeds/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_cloudbeds.js --format=iife",
     "build:mews": "esbuild src/mews/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_mews.js --format=iife",
     "deploy": "npm run build && surge",
-    "deploy:cloudbeds": "npm run build:cloudbeds && surge . klaviyo-hotel-debug-1769738861.surge.sh",
+    "deploy:cloudbeds": "npm run build:cloudbeds && surge . klaviyo-hotel-cloudbeds.surge.sh",
     "deploy:mews": "npm run build:mews && surge . klaviyo-hotel-mews.surge.sh",
     "watch": "esbuild src/cloudbeds/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_cloudbeds.js --format=iife --watch",
     "watch:mews": "esbuild src/mews/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_mews.js --format=iife --watch"

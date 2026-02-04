@@ -5,7 +5,6 @@ import { trackViewedListing, trackStartedCheckout, attemptIdentify } from './kla
 (function() {
     debugLog('Script initialized');
     const windowDataLayer = window.dataLayer;
-    const klaviyo = window.klaviyo || [];
 
     // Check if dataLayer exists
     if (!windowDataLayer) {

@@ -11,6 +11,7 @@
   var identifyAttempted = false;
   var reservationData = null;
   var viewItemData = null;
+  var klaviyo = window.klaviyo || [];
   function setReservationData(data) {
     reservationData = data;
     debugLog("Stored reservation data:", data);
@@ -153,7 +154,6 @@
   }
   function trackViewedListing(itemData, ecommerceData) {
     debugLog("trackViewedListing called with:", { itemData, ecommerceData });
-    const klaviyo = window.klaviyo || [];
     const hasItemData = itemData && (itemData.item_name || itemData.name || itemData.item_id || itemData.id);
     const hasReservationData = itemData && (itemData.roomId || itemData.startDate);
     if (!hasItemData && !hasReservationData) {
@@ -169,7 +169,6 @@
   }
   function trackStartedCheckout(items, ecommerceData) {
     debugLog("trackStartedCheckout called with:", { items, ecommerceData });
-    const klaviyo = window.klaviyo || [];
     const checkoutData = buildStartedCheckoutPayload(items, ecommerceData);
     klaviyo.track("Started Checkout", checkoutData).then(() => {
       debugLog("Started Checkout tracked");
@@ -178,7 +177,6 @@
     });
   }
   function attemptIdentify(source) {
-    const klaviyo = window.klaviyo || [];
     if (source) {
       debugLog("attemptIdentify called from:", source);
     }
@@ -202,7 +200,6 @@
     }
   }
   function performIdentification(source) {
-    const klaviyo = window.klaviyo || [];
     const iframe = document.querySelector("iframe.mews-distributor") || document.querySelector('iframe[name*="mews-distributor"]');
     let searchDoc = document;
     if (iframe) {
@@ -295,6 +292,7 @@
     return emailRegex.test(email);
   }
   function isOnGuestsPage() {
+    debugLog("Checking if on guests page", window.location.href);
     return window.location.href.indexOf("/contact-details") > -1 || window.location.href.indexOf("/checkout") > -1 || document.getElementById("contact-details");
   }
   function startIdentifyMonitoring() {
@@ -532,9 +530,9 @@
       debugLog("Missing email or identify handler");
       return;
     }
-    const klaviyo = window.klaviyo || [];
-    if (klaviyo.isIdentified && typeof klaviyo.isIdentified === "function") {
-      klaviyo.isIdentified().then(function(isIdentified) {
+    const klaviyo2 = window.klaviyo || [];
+    if (klaviyo2.isIdentified && typeof klaviyo2.isIdentified === "function") {
+      klaviyo2.isIdentified().then(function(isIdentified) {
         if (isIdentified) {
           debugLog("User already identified via Klaviyo, skipping");
           return;
@@ -549,7 +547,7 @@
     }
   }
   function performIdentifyFromEvent(email, fullName) {
-    const klaviyo = window.klaviyo || [];
+    const klaviyo2 = window.klaviyo || [];
     const identifyData = { email };
     if (fullName) {
       const nameParts = fullName.trim().split(" ");
@@ -561,14 +559,13 @@
       }
     }
     debugLog("Identifying user from event data:", identifyData);
-    klaviyo.identify(identifyData);
+    klaviyo2.identify(identifyData);
   }
 
   // src/mews/klaviyo_hotel_tracking.js
   (function() {
     debugLog("Script initialized");
     const windowDataLayer = window.dataLayer;
-    const klaviyo = window.klaviyo || [];
     if (!windowDataLayer) {
       debugLog("WARNING: dataLayer not found on window object");
       return;
