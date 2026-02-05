@@ -339,8 +339,7 @@
   }
   function createDebugLogger(prefix, legacyEnabled = true) {
     return function debugLog2(...args) {
-      const shouldLog = legacyEnabled || isDebugEnabled();
-      if (shouldLog) {
+      if (legacyEnabled && isDebugEnabled()) {
         console.log(prefix, ...args);
       }
     };
@@ -625,7 +624,6 @@
   // src/mews/klaviyo_hotel_tracking.js
   (function() {
     debugLog("Script initialized");
-    debugLog("Connor Test 2");
     const windowDataLayer = window.dataLayer;
     if (!windowDataLayer) {
       debugLog("WARNING: dataLayer not found on window object");

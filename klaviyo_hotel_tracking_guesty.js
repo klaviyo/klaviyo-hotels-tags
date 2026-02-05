@@ -49,8 +49,7 @@
     return false;
   }
   function debugLog(...args) {
-    const shouldLog = DEBUG || isDebugEnabled();
-    if (shouldLog) {
+    if (DEBUG && isDebugEnabled()) {
       console.log(...args);
     }
   }

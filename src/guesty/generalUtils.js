@@ -44,9 +44,7 @@ function isDebugEnabled() {
 }
 
 export function debugLog(...args) {
-    // Log if local DEBUG is true OR account-based debugging is enabled
-    const shouldLog = DEBUG || isDebugEnabled();
-    if (shouldLog) {
+    if (DEBUG && isDebugEnabled()) {
         console.log(...args);
     }
 }
