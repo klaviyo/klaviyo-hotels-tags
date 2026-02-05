@@ -12,25 +12,33 @@ Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Clo
 │   │   ├── debugConfig.js            # Debug configuration (account IDs)
 │   │   └── README.md                 # Shared utilities documentation
 │   ├── cloudbeds/
+│   │   ├── constants.js              # Configuration constants (debug flag, event mapping)
 │   │   ├── generalUtils.js           # General utility functions (logging, validation)
 │   │   ├── gtmUtils.js               # GTM/dataLayer event handling
-│   │   ├── klaviyoUtils.js           # Klaviyo payload builders
+│   │   ├── klaviyoUtils.js           # Klaviyo payload builders and tracking
 │   │   └── klaviyo_hotel_tracking.js # Main Cloudbeds tracking script
 │   ├── mews/
+│   │   ├── constants.js              # Configuration constants (debug flag, event mapping)
 │   │   ├── generalUtils.js           # General utility functions (logging, validation)
-│   │   ├── klaviyoUtils.js           # Klaviyo payload builders
+│   │   ├── gtmUtils.js               # GTM/dataLayer event handling
+│   │   ├── klaviyoUtils.js           # Klaviyo payload builders and tracking
 │   │   └── klaviyo_hotel_tracking.js # Main Mews tracking script
 │   └── guesty/
-│       ├── constants.js              # Configuration constants
+│       ├── constants.js              # Configuration constants (debug flag)
 │       ├── generalUtils.js           # General utility functions (logging, validation, URL parsing)
 │       ├── klaviyoUtils.js           # Klaviyo event tracking and error monitoring
 │       └── klaviyo_hotel_tracking.js # Main Guesty tracking script (network interception)
-├── .github/workflows/
-│   └── deploy.yml                    # GitHub Actions workflow for production deployment
+├── .github/
+│   ├── workflows/
+│   │   └── deploy.yml                # GitHub Actions: auto-deploy to GitHub Pages
+│   ├── CODEOWNERS                    # Auto-assigns reviewers on PRs
+│   └── pull_request_template.md      # PR template with checklist
 ├── klaviyo_hotel_tracking_cloudbeds.js  # Built Cloudbeds bundle
 ├── klaviyo_hotel_tracking_mews.js       # Built Mews bundle
 ├── klaviyo_hotel_tracking_guesty.js     # Built Guesty bundle
-└── package.json
+├── template_hotel.tpl                   # GTM Tag Template
+├── package.json                         # Dependencies and scripts
+└── README.md                            # This file
 ```
 
 ## Events Tracked
