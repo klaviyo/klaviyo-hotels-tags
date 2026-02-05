@@ -13,9 +13,14 @@
     "deploy:guesty": "npm run build:guesty && surge . klaviyo-hotel-guesty.surge.sh",
     "watch": "esbuild src/cloudbeds/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_cloudbeds.js --format=iife --watch",
     "watch:mews": "esbuild src/mews/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_mews.js --format=iife --watch",
-    "watch:guesty": "esbuild src/guesty/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_guesty.js --format=iife --watch"
+    "watch:guesty": "esbuild src/guesty/klaviyo_hotel_tracking.js --bundle --outfile=klaviyo_hotel_tracking_guesty.js --format=iife --watch",
+    "dev": "nodemon --watch src --ext js --exec \"npm run deploy\"",
+    "dev:cloudbeds": "nodemon --watch src/cloudbeds --watch src/shared --ext js --exec \"npm run deploy:cloudbeds\"",
+    "dev:mews": "nodemon --watch src/mews --watch src/shared --ext js --exec \"npm run deploy:mews\"",
+    "dev:guesty": "nodemon --watch src/guesty --watch src/shared --ext js --exec \"npm run deploy:guesty\""
   },
   "devDependencies": {
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.25.0",
+    "nodemon": "^3.1.11"
   }
 }

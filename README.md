@@ -6,6 +6,11 @@ Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Clo
 
 ```
 ├── src/
+│   ├── shared/                       # Shared utilities across all integrations
+│   │   ├── validationUtils.js        # Email and phone validation
+│   │   ├── debugUtils.js             # Debug logging with account-based control
+│   │   ├── debugConfig.js            # Debug configuration (account IDs)
+│   │   └── README.md                 # Shared utilities documentation
 │   ├── cloudbeds/
 │   │   ├── generalUtils.js           # General utility functions (logging, validation)
 │   │   ├── gtmUtils.js               # GTM/dataLayer event handling
@@ -20,6 +25,8 @@ Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Clo
 │       ├── generalUtils.js           # General utility functions (logging, validation, URL parsing)
 │       ├── klaviyoUtils.js           # Klaviyo event tracking and error monitoring
 │       └── klaviyo_hotel_tracking.js # Main Guesty tracking script (network interception)
+├── .github/workflows/
+│   └── deploy.yml                    # GitHub Actions workflow for production deployment
 ├── klaviyo_hotel_tracking_cloudbeds.js  # Built Cloudbeds bundle
 ├── klaviyo_hotel_tracking_mews.js       # Built Mews bundle
 ├── klaviyo_hotel_tracking_guesty.js     # Built Guesty bundle
@@ -71,12 +78,30 @@ npm install
 - `npm run build:cloudbeds` - Build only Cloudbeds script
 - `npm run build:mews` - Build only Mews script
 - `npm run build:guesty` - Build only Guesty script
+
+### Watch Scripts (Build Only)
+
 - `npm run watch` - Auto-rebuild Cloudbeds on file changes
 - `npm run watch:mews` - Auto-rebuild Mews on file changes
 - `npm run watch:guesty` - Auto-rebuild Guesty on file changes
 
-### Deployment Scripts
+### Development Scripts (Build + Auto-Deploy to Surge)
 
+**For active development with automatic deployment to Surge:**
+
+- `npm run dev` - Watch all files and auto-deploy all integrations to Surge
+- `npm run dev:cloudbeds` - Watch Cloudbeds files and auto-deploy to Surge
+- `npm run dev:mews` - Watch Mews files and auto-deploy to Surge
+- `npm run dev:guesty` - Watch Guesty files and auto-deploy to Surge
+
+These scripts will:
+1. Watch for file changes in `src/` directories
+2. Automatically rebuild on save
+3. Deploy to Surge for testing
+
+### Manual Deployment to Surge
+
+- `npm run deploy` - Build and deploy all integrations to Surge
 - `npm run deploy:cloudbeds` - Build and deploy Cloudbeds to Surge
 - `npm run deploy:mews` - Build and deploy Mews to Surge
 - `npm run deploy:guesty` - Build and deploy Guesty to Surge
@@ -102,31 +127,78 @@ npm run deploy:cloudbeds
 npm run deploy:mews
 ```
 
-## Surge Deployment
+## Deployment
 
-Your tracking scripts are deployed to:
+### Development (Surge)
 
-**Cloudbeds:**
-https://klaviyo-hotel-cloudbeds.surge.sh/klaviyo_hotel_tracking_cloudbeds.js
+For testing and development, scripts are deployed to Surge:
 
-**Mews:**
-https://klaviyo-hotel-mews.surge.sh/klaviyo_hotel_tracking_mews.js
+**Cloudbeds:** https://klaviyo-hotel-cloudbeds.surge.sh/klaviyo_hotel_tracking_cloudbeds.js
+**Mews:** https://klaviyo-hotel-mews.surge.sh/klaviyo_hotel_tracking_mews.js
+**Guesty:** https://klaviyo-hotel-guesty.surge.sh/klaviyo_hotel_tracking_guesty.js
 
-**Guesty:**
-https://klaviyo-hotel-guesty.surge.sh/klaviyo_hotel_tracking_guesty.js
-
-Deploy with:
+Deploy manually:
 ```bash
 npm run deploy:cloudbeds
 npm run deploy:mews
 npm run deploy:guesty
 ```
 
+Or use auto-deploy during development:
+```bash
+npm run dev:cloudbeds  # Auto-deploys to Surge on file changes
+```
+
+### Production (GitHub Pages)
+
+Production scripts are automatically deployed to GitHub Pages when you push to the `master` branch.
+
+**Production URLs:**
+- `https://klaviyo.github.io/tagmanager/klaviyo_hotel_tracking_cloudbeds.js`
+- `https://klaviyo.github.io/tagmanager/klaviyo_hotel_tracking_mews.js`
+- `https://klaviyo.github.io/tagmanager/klaviyo_hotel_tracking_guesty.js`
+
+**Deployment Process:**
+1. Make changes and commit to a branch
+2. Push to GitHub and create a PR
+3. Merge to `master`
+4. GitHub Actions automatically builds and deploys to GitHub Pages
+
+No manual deployment needed for production!
+
 ## Usage
 
 Add the script URL to your GTM Tag Template. See .tpl file for more info.
 
 **Note:** While Cloudbeds and Mews listen to GTM dataLayer events, Guesty uses network interception (fetch/XHR) to track events directly from API calls.
+
+## Debug Logging
+
+Debug logging can be controlled per-account for production troubleshooting.
+
+### Configuration
+
+Edit `src/shared/debugConfig.js`:
+
+```javascript
+// Global debug flag (set to false for production)
+export const DEBUG_ENABLED_GLOBALLY = false;
+
+// Enable debugging for specific Klaviyo accounts
+export const DEBUG_ACCOUNT_IDS = [
+    'ABC123',  // Customer having issues
+    'XYZ789',  // Another customer to debug
+];
+```
+
+### How It Works
+
+1. Debug logs are disabled by default in production (`DEBUG_ENABLED_GLOBALLY = false`)
+2. Add customer Klaviyo account IDs to `DEBUG_ACCOUNT_IDS` array
+3. Redeploy - debugging will auto-enable only for those accounts
+4. The script checks `klaviyo.account()` on each log call
+
+See `src/shared/README.md` for more details.
 
 ## Architecture
 
@@ -136,7 +208,8 @@ The codebase uses **esbuild** to bundle modular ES6 code into a single IIFE (Imm
 - Organized, maintainable code with shared utilities
 - Single output file for easy deployment
 - Fast builds with esbuild
-- Debug logging enabled by default for easier troubleshooting
+- Account-based debug logging for production troubleshooting
+- Automatic deployment with GitHub Actions
 
 ### Implementation Approaches
 

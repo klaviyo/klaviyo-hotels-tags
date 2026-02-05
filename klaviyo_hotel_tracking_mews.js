@@ -21,8 +21,7 @@
     debugLog("Stored view_item data:", viewItemData);
   }
   function calculateNights(startDate, endDate) {
-    if (!startDate || !endDate)
-      return null;
+    if (!startDate || !endDate) return null;
     try {
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -247,32 +246,21 @@
     }
     debugLog("Searching for email field...");
     let emailField = searchDoc.querySelector('input[name="email"]');
-    if (!emailField)
-      emailField = searchDoc.querySelector('input[id="email"]');
-    if (!emailField)
-      emailField = searchDoc.querySelector('[data-test-id="checkout-field-email"]');
-    if (!emailField)
-      emailField = searchDoc.querySelector('input[type="email"]');
-    if (!emailField)
-      emailField = searchDoc.querySelector('input[autocomplete="email"]');
+    if (!emailField) emailField = searchDoc.querySelector('input[id="email"]');
+    if (!emailField) emailField = searchDoc.querySelector('[data-test-id="checkout-field-email"]');
+    if (!emailField) emailField = searchDoc.querySelector('input[type="email"]');
+    if (!emailField) emailField = searchDoc.querySelector('input[autocomplete="email"]');
     debugLog("Searching for phone field...");
     let phoneField = searchDoc.querySelector('input[name="phone"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('input[id="phone"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('[data-test-id="checkout-field-phone"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('input[name="phoneNumber"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('input[type="tel"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('input[autocomplete="tel"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('input[id="phone"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('[data-test-id="checkout-field-phone"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('input[name="phoneNumber"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('input[type="tel"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('input[autocomplete="tel"]');
     debugLog("Email field found:", !!emailField);
-    if (emailField)
-      debugLog("Email field details:", { name: emailField.name, id: emailField.id, type: emailField.type });
+    if (emailField) debugLog("Email field details:", { name: emailField.name, id: emailField.id, type: emailField.type });
     debugLog("Phone field found:", !!phoneField);
-    if (phoneField)
-      debugLog("Phone field details:", { name: phoneField.name, id: phoneField.id, type: phoneField.type });
+    if (phoneField) debugLog("Phone field details:", { name: phoneField.name, id: phoneField.id, type: phoneField.type });
     const email = emailField ? emailField.value.trim() : "";
     const phone = phoneField ? phoneField.value.trim() : "";
     debugLog("Email value:", email);
@@ -316,8 +304,7 @@
 
   // src/shared/validationUtils.js
   function isValidEmail(email) {
-    if (!email || email.length < 5)
-      return false;
+    if (!email || email.length < 5) return false;
     const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
   }
