@@ -2,6 +2,18 @@
   // src/guesty/constants.js
   var DEBUG = true;
 
+  // src/shared/validationUtils.js
+  function isValidEmail(email) {
+    if (!email || email.length < 5)
+      return false;
+    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  }
+  function isValidPhone(phone) {
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    return phoneRegex.test(phone);
+  }
+
   // src/guesty/generalUtils.js
   function getCurrentPageURL() {
     return window.location.pathname;
@@ -13,14 +25,6 @@
       checkOut: params.get("checkOut"),
       minOccupancy: params.get("minOccupancy")
     };
-  }
-  function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-  function isValidPhone(phone) {
-    const phoneRegex = /^\+?[0-9]{10,15}$/;
-    return phoneRegex.test(phone);
   }
   function debugLog(...args) {
     if (DEBUG) {

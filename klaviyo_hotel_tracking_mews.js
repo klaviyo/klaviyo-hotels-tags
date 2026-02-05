@@ -278,16 +278,19 @@
     debugLog("Email value:", email);
     debugLog("Phone value:", phone);
     const hasValidEmail = email && isValidEmail(email);
-    const hasPhone = phone && phone.length > 0;
+    const hasValidPhone = phone && isValidPhone(phone);
     if (!hasValidEmail && email) {
       debugLog("Email invalid or incomplete:", email);
     }
-    if ((hasValidEmail || hasPhone) && !identifyAttempted) {
+    if (!hasValidPhone && phone) {
+      debugLog("Phone invalid or incomplete:", phone);
+    }
+    if ((hasValidEmail || hasValidPhone) && !identifyAttempted) {
       const identifyData = {};
       if (hasValidEmail) {
         identifyData["email"] = email;
       }
-      if (hasPhone) {
+      if (hasValidPhone) {
         identifyData["phone_number"] = phone;
       }
       if (identifyData.email || identifyData.phone_number) {
@@ -311,17 +314,31 @@
     }
   }
 
-  // src/mews/generalUtils.js
-  function debugLog(message, data) {
-    if (DEBUG) {
-      console.log("[Klaviyo Hotel Tracking] " + message, data || "");
-    }
-  }
+  // src/shared/validationUtils.js
   function isValidEmail(email) {
     if (!email || email.length < 5)
       return false;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
+  }
+  function isValidPhone(phone) {
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    return phoneRegex.test(phone);
+  }
+
+  // src/shared/debugUtils.js
+  function createDebugLogger(prefix, enabled = true) {
+    return function debugLog2(...args) {
+      if (enabled) {
+        console.log(prefix, ...args);
+      }
+    };
+  }
+
+  // src/mews/generalUtils.js
+  var logger = createDebugLogger("[Klaviyo Hotel Tracking]", DEBUG);
+  function debugLog(message, data) {
+    logger(message, data || "");
   }
   function isOnGuestsPage() {
     debugLog("Checking if on guests page", window.location.href);

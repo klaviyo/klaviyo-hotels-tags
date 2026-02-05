@@ -2,19 +2,16 @@
 
 import { DEBUG } from './constants.js';
 import { attemptIdentify } from './klaviyoUtils.js';
+import { isValidEmail, isValidPhone } from '../shared/validationUtils.js';
+import { createDebugLogger } from '../shared/debugUtils.js';
+
+// Export shared validation functions
+export { isValidEmail, isValidPhone };
 
 // Debug logging utility
+const logger = createDebugLogger('[Klaviyo Hotel Tracking]', DEBUG);
 export function debugLog(message, data) {
-    if (DEBUG) {
-        console.log('[Klaviyo Hotel Tracking] ' + message, data || '');
-    }
-}
-
-// Simple email validation
-export function isValidEmail(email) {
-    if (!email || email.length < 5) return false;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    logger(message, data || '');
 }
 
 // Check if on guests page
