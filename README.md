@@ -1,234 +1,188 @@
-# Klaviyo Hotel Tracking
+# Klaviyo Hotel Booking Tracking
 
-Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Cloudbeds, Mews, and Guesty booking engines.
+**Track hotel bookings and send event data to Klaviyo for email marketing and automation.**
 
-## Project Structure
+This Google Tag Manager template enables seamless tracking of hotel booking events from popular Property Management Systems (PMS) and Booking Engines, sending structured data directly to Klaviyo.
 
-```
-├── src/
-│   ├── shared/                       # Shared utilities across all integrations
-│   │   ├── validationUtils.js        # Email and phone validation
-│   │   ├── debugUtils.js             # Debug logging with account-based control
-│   │   ├── debugConfig.js            # Debug configuration (account IDs)
-│   │   └── README.md                 # Shared utilities documentation
-│   ├── cloudbeds/
-│   │   ├── constants.js              # Configuration constants (debug flag, event mapping)
-│   │   ├── generalUtils.js           # General utility functions (logging, validation)
-│   │   ├── gtmUtils.js               # GTM/dataLayer event handling
-│   │   ├── klaviyoUtils.js           # Klaviyo payload builders and tracking
-│   │   └── klaviyo_hotel_tracking.js # Main Cloudbeds tracking script
-│   ├── mews/
-│   │   ├── constants.js              # Configuration constants (debug flag, event mapping)
-│   │   ├── generalUtils.js           # General utility functions (logging, validation)
-│   │   ├── gtmUtils.js               # GTM/dataLayer event handling
-│   │   ├── klaviyoUtils.js           # Klaviyo payload builders and tracking
-│   │   └── klaviyo_hotel_tracking.js # Main Mews tracking script
-│   └── guesty/
-│       ├── constants.js              # Configuration constants (debug flag)
-│       ├── generalUtils.js           # General utility functions (logging, validation, URL parsing)
-│       ├── klaviyoUtils.js           # Klaviyo event tracking and error monitoring
-│       └── klaviyo_hotel_tracking.js # Main Guesty tracking script (network interception)
-├── .github/
-│   ├── workflows/
-│   │   └── deploy.yml                # GitHub Actions: auto-deploy to GitHub Pages
-│   ├── CODEOWNERS                    # Auto-assigns reviewers on PRs
-│   └── pull_request_template.md      # PR template with checklist
-├── klaviyo_hotel_tracking_cloudbeds.js  # Built Cloudbeds bundle
-├── klaviyo_hotel_tracking_mews.js       # Built Mews bundle
-├── klaviyo_hotel_tracking_guesty.js     # Built Guesty bundle
-├── template_hotel.tpl                   # GTM Tag Template
-├── package.json                         # Dependencies and scripts
-└── README.md                            # This file
-```
+## ✨ Features
 
-## Events Tracked
+- 🏨 **Multi-Platform Support**: Cloudbeds, Mews, and Guesty integrations
+- 📊 **Automatic Event Tracking**: Viewed Listing, Started Checkout, and more
+- 👤 **Customer Identification**: Automatically identifies guests with email/phone
+- 🎯 **Rich Event Data**: Captures dates, pricing, guest count, property details
+- 🔧 **Easy Setup**: Simple GTM installation with no coding required
+- 🐛 **Debug Mode**: Built-in logging for troubleshooting
+
+## 📋 Supported Platforms
 
 ### Cloudbeds
-1. **Viewed Listing** - Triggered by:
-   - `cb_booking_engine_load` (Cloudbeds booking engine load)
-   - `view_item` (GA4 view item event)
-   - `add_to_cart` (GA4 add to cart - tracked as listing view since Cloudbeds has no dedicated listing page)
-
-2. **Started Checkout** - Triggered by:
-   - `begin_checkout` (GA4 checkout event)
-   - Also attempts to identify user from guest form fields (email/phone)
+Tracks events from Cloudbeds booking engine via GTM dataLayer events.
 
 ### Mews
-1. **Viewed Listing** - Triggered when user views available rooms
-2. **Started Checkout** - Triggered when user begins the checkout process
-3. **Placed Order** - Triggered when booking is completed
+Tracks events from Mews Distributor (booking engine) via GTM dataLayer events.
 
 ### Guesty
-1. **Viewed Listing** - Triggered when API call to `/api/pm-websites-backend/listings/` completes
-   - Stores listing data for checkout reuse (avoids CORS issues)
-   - Tracks property details, amenities, pricing, location
-2. **Started Checkout** - Triggered when API call to `/api/pm-websites-backend/reservations/quotes` completes
-   - Uses stored listing data from Viewed Listing event
-   - Extracts checkout details (dates, guest count) from URL parameters
-   - Identifies user from email/phone form fields on blur
-3. **Error Monitoring** - Sends alerts to monitoring account (UcwNrH) when critical errors occur
-   - Only monitors `klaviyo.track()` failures
-   - Uses direct Klaviyo API calls (no second script instance)
-   - Includes error metadata: Failed Event, Error Cause, Customer Account ID
+Tracks events directly from Guesty booking flow via network interception.
 
-## Setup
+## 🎯 Events Tracked
 
-Install dependencies:
-```bash
-npm install
-```
+| Event | Description | Trigger |
+|-------|-------------|---------|
+| **Viewed Listing** | Guest views property details | Property/room page view |
+| **Started Checkout** | Guest begins checkout process | Checkout initiated |
+| **Identified Guest** | Guest enters contact info | Email/phone entered |
 
-## Development Workflow
+### Event Properties Captured:
+- Property name, ID, location
+- Room/listing details
+- Check-in/check-out dates
+- Number of guests, nights, rooms
+- Pricing information
+- Guest contact information (email, phone, name)
 
-### Build Scripts
+## 🚀 Installation
 
-- `npm run build` - Build all scripts (Cloudbeds, Mews, Guesty)
-- `npm run build:cloudbeds` - Build only Cloudbeds script
-- `npm run build:mews` - Build only Mews script
-- `npm run build:guesty` - Build only Guesty script
+### Prerequisites
+1. Active Klaviyo account
+2. Google Tag Manager installed on your website
+3. Supported booking engine (Cloudbeds, Mews, or Guesty)
 
-### Watch Scripts (Build Only)
+### Setup Instructions
 
-- `npm run watch` - Auto-rebuild Cloudbeds on file changes
-- `npm run watch:mews` - Auto-rebuild Mews on file changes
-- `npm run watch:guesty` - Auto-rebuild Guesty on file changes
+#### Step 1: Import Template to GTM
 
-### Development Scripts (Build + Auto-Deploy to Surge)
+1. Download the template file: [`template_hotel.tpl`](template_hotel.tpl)
+2. In Google Tag Manager, go to **Templates** → **Tag Templates**
+3. Click **New** → **Import**
+4. Select the downloaded `.tpl` file
+5. Click **Save**
 
-**For active development with automatic deployment to Surge:**
+#### Step 2: Create a New Tag
 
-- `npm run dev` - Watch all files and auto-deploy all integrations to Surge
-- `npm run dev:cloudbeds` - Watch Cloudbeds files and auto-deploy to Surge
-- `npm run dev:mews` - Watch Mews files and auto-deploy to Surge
-- `npm run dev:guesty` - Watch Guesty files and auto-deploy to Surge
+1. Go to **Tags** → **New**
+2. Click **Tag Configuration**
+3. Select **Klaviyo Hotel Tracking** from your templates
+4. Configure the following:
 
-These scripts will:
-1. Watch for file changes in `src/` directories
-2. Automatically rebuild on save
-3. Deploy to Surge for testing
+   **Required Fields:**
+   - **Klaviyo Public API Key**: Your Klaviyo account public key (6-character code)
+   - **Integration Type**: Select your booking platform (Cloudbeds, Mews, or Guesty)
 
-### Manual Deployment to Surge
+   **Optional Fields:**
+   - **Debug Mode**: Enable to see console logs (recommended for initial setup)
 
-- `npm run deploy` - Build and deploy all integrations to Surge
-- `npm run deploy:cloudbeds` - Build and deploy Cloudbeds to Surge
-- `npm run deploy:mews` - Build and deploy Mews to Surge
-- `npm run deploy:guesty` - Build and deploy Guesty to Surge
+5. **Triggering**: Set to fire on **All Pages** or specific pages where your booking engine loads
 
-### Adding Utilities
+#### Step 3: Publish
 
-1. Add your utility function to the appropriate utils file (`src/cloudbeds/generalUtils.js` or `src/mews/generalUtils.js`):
-```javascript
-export function myUtility() {
-    // Your code here
-}
-```
+1. Click **Save**
+2. Submit your GTM container
+3. Publish changes
 
-2. Import it in your tracking file:
-```javascript
-import { myUtility } from './generalUtils.js';
-```
+#### Step 4: Test
 
-3. Build and deploy:
-```bash
-npm run deploy:cloudbeds
-# or
-npm run deploy:mews
-```
+1. Enable **Debug Mode** in the tag configuration
+2. Use **GTM Preview Mode** to test
+3. Complete a booking flow on your website
+4. Check browser console for `[Klaviyo Hotel Tracking]` logs
+5. Verify events appear in your Klaviyo account
 
-## Deployment
+## 🔧 Configuration
 
-### Development (Surge)
+### Finding Your Klaviyo Public API Key
 
-For testing and development, scripts are deployed to Surge:
+1. Log in to Klaviyo
+2. Go to **Settings** → **Account** → **Settings** → **API Keys**
+3. Copy your **Public API Key** (6-character code, e.g., `ABC123`)
+4. Paste into the GTM tag configuration
 
-**Cloudbeds:** https://klaviyo-hotel-cloudbeds.surge.sh/klaviyo_hotel_tracking_cloudbeds.js
-**Mews:** https://klaviyo-hotel-mews.surge.sh/klaviyo_hotel_tracking_mews.js
-**Guesty:** https://klaviyo-hotel-guesty.surge.sh/klaviyo_hotel_tracking_guesty.js
+### Debug Mode
 
-Deploy manually:
-```bash
-npm run deploy:cloudbeds
-npm run deploy:mews
-npm run deploy:guesty
-```
+Enable debug mode during setup to see detailed logging:
+- Event tracking confirmations
+- User identification status
+- Data payload details
+- Error messages
 
-Or use auto-deploy during development:
-```bash
-npm run dev:cloudbeds  # Auto-deploys to Surge on file changes
-```
+**Important:** Disable debug mode in production to avoid console clutter.
 
-### Production (GitHub Pages)
+## 📊 Using Data in Klaviyo
 
-Production scripts are automatically deployed to GitHub Pages when you push to the `master` branch.
+Once events are flowing to Klaviyo, you can:
 
-**Production URLs:**
-- `https://klaviyo.github.io/tagmanager/klaviyo_hotel_tracking_cloudbeds.js`
-- `https://klaviyo.github.io/tagmanager/klaviyo_hotel_tracking_mews.js`
-- `https://klaviyo.github.io/tagmanager/klaviyo_hotel_tracking_guesty.js`
+### Create Segments
+- Guests who viewed properties but didn't book
+- Guests who started checkout but didn't complete
+- Guests who booked specific property types
 
-**Deployment Process:**
-1. Make changes and commit to a branch
-2. Push to GitHub and create a PR
-3. Merge to `master`
-4. GitHub Actions automatically builds and deploys to GitHub Pages
+### Build Flows
+- Abandoned checkout recovery emails
+- Post-booking confirmation and upsells
+- Pre-arrival information and reminders
+- Post-stay review requests
 
-No manual deployment needed for production!
+### Personalize Campaigns
+Use event properties in emails:
+- Property name and details
+- Booking dates and guest count
+- Pricing information
+- Custom recommendations
 
-## Usage
+## 🏗️ Technical Details
 
-Add the script URL to your GTM Tag Template. See .tpl file for more info.
+### Integration Methods
 
-**Note:** While Cloudbeds and Mews listen to GTM dataLayer events, Guesty uses network interception (fetch/XHR) to track events directly from API calls.
+**Cloudbeds & Mews**: Listen to GTM dataLayer events pushed by the booking engine
 
-## Debug Logging
+**Guesty**: Intercepts network requests to capture booking data directly from API calls
 
-Debug logging can be controlled per-account for production troubleshooting.
+### Browser Compatibility
+- All modern browsers (Chrome, Firefox, Safari, Edge)
+- Mobile browsers supported
 
-### Configuration
+### Performance
+- Minimal impact on page load
+- Asynchronous event tracking
+- No blocking operations
 
-Edit `src/shared/debugConfig.js`:
+## 🐛 Troubleshooting
 
-```javascript
-// Global debug flag (set to false for production)
-export const DEBUG_ENABLED_GLOBALLY = false;
+### Events Not Appearing in Klaviyo
 
-// Enable debugging for specific Klaviyo accounts
-export const DEBUG_ACCOUNT_IDS = [
-    'ABC123',  // Customer having issues
-    'XYZ789',  // Another customer to debug
-];
-```
+1. **Enable Debug Mode** in GTM tag configuration
+2. Check browser console for `[Klaviyo Hotel Tracking]` logs
+3. Verify Klaviyo Public API Key is correct
+4. Ensure GTM tag is firing (use Preview mode)
+5. Check that your booking engine is supported
 
-### How It Works
+### Guest Not Being Identified
 
-1. Debug logs are disabled by default in production (`DEBUG_ENABLED_GLOBALLY = false`)
-2. Add customer Klaviyo account IDs to `DEBUG_ACCOUNT_IDS` array
-3. Redeploy - debugging will auto-enable only for those accounts
-4. The script checks `klaviyo.account()` on each log call
+- Guest identification happens when email/phone is entered
+- Check console logs for "User identified" messages
+- Verify form fields match expected selectors
 
-See `src/shared/README.md` for more details.
+### Need Help?
 
-## Architecture
+- Check `src/DEVELOPMENT.md` for technical documentation
+- Review browser console logs with Debug Mode enabled
+- Contact your implementation team
 
-The codebase uses **esbuild** to bundle modular ES6 code into a single IIFE (Immediately Invoked Function Expression) that can be loaded via a script tag.
+## 📚 Resources
 
-**Benefits:**
-- Organized, maintainable code with shared utilities
-- Single output file for easy deployment
-- Fast builds with esbuild
-- Account-based debug logging for production troubleshooting
-- Automatic deployment with GitHub Actions
+- [Klaviyo Documentation](https://help.klaviyo.com/)
+- [Google Tag Manager Help](https://support.google.com/tagmanager)
+- [Technical Development Guide](src/DEVELOPMENT.md)
 
-### Implementation Approaches
+## 📝 License
 
-**Cloudbeds & Mews (GTM-based):**
-- Listen to GTM dataLayer events
-- Parse ecommerce data from GTM events
-- Track events when GTM pushes to dataLayer
+Copyright © Klaviyo. All rights reserved.
 
-**Guesty (Network Interception):**
-- Intercept fetch() and XMLHttpRequest calls
-- Parse API responses directly
-- Store listing data to avoid CORS issues
-- Extract checkout details from URL parameters
-- Monitor critical errors with direct API calls
+## 🤝 Support
+
+For technical support or questions about implementation, please contact your Klaviyo account team.
+
+---
+
+**Version**: 1.0.0
+**Last Updated**: February 2026
+**Maintained by**: Klaviyo
