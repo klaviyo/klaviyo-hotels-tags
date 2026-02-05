@@ -1,3 +1,18 @@
-.claude
-CNAME
-node_modules
+# Dependencies
+node_modules/
+
+# Build output (old location - builds now go to public/)
+/klaviyo_hotel_tracking_cloudbeds.js
+/klaviyo_hotel_tracking_mews.js
+/klaviyo_hotel_tracking_guesty.js
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/

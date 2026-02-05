@@ -33,12 +33,14 @@ Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Clo
 │   │   └── deploy.yml                # GitHub Actions: auto-deploy to GitHub Pages
 │   ├── CODEOWNERS                    # Auto-assigns reviewers on PRs
 │   └── pull_request_template.md      # PR template with checklist
-├── klaviyo_hotel_tracking_cloudbeds.js  # Built Cloudbeds bundle
-├── klaviyo_hotel_tracking_mews.js       # Built Mews bundle
-├── klaviyo_hotel_tracking_guesty.js     # Built Guesty bundle
+├── public/                            # Build output directory
+│   ├── klaviyo_hotel_tracking_cloudbeds.js  # Built Cloudbeds bundle
+│   ├── klaviyo_hotel_tracking_mews.js       # Built Mews bundle
+│   └── klaviyo_hotel_tracking_guesty.js     # Built Guesty bundle
 ├── template_hotel.tpl                   # GTM Tag Template
 ├── package.json                         # Dependencies and scripts
-└── README.md                            # This file
+├── .gitignore                           # Git ignore rules
+└── README.md                            # Public-facing documentation
 ```
 
 ## Events Tracked
