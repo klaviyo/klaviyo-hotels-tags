@@ -164,16 +164,19 @@
     debugLog("Email value:", email);
     debugLog("Phone value:", phone);
     const hasValidEmail = email && isValidEmail(email);
-    const hasPhone = phone && phone.length > 0;
+    const hasValidPhone = phone && isValidPhone(phone);
     if (!hasValidEmail && email) {
       debugLog("Email invalid or incomplete:", email);
     }
-    if ((hasValidEmail || hasPhone) && !identifyAttempted) {
+    if (!hasValidPhone && phone) {
+      debugLog("Phone invalid or incomplete:", phone);
+    }
+    if ((hasValidEmail || hasValidPhone) && !identifyAttempted) {
       const identifyData = {};
       if (hasValidEmail) {
         identifyData["email"] = email;
       }
-      if (hasPhone) {
+      if (hasValidPhone) {
         identifyData["phone_number"] = phone;
       }
       if (identifyData.email || identifyData.phone_number) {
@@ -197,17 +200,53 @@
     }
   }
 
-  // src/cloudbeds/generalUtils.js
-  function debugLog(message, data) {
-    if (DEBUG) {
-      console.log("[Klaviyo Hotel Tracking] " + message, data || "");
-    }
-  }
+  // src/shared/validationUtils.js
   function isValidEmail(email) {
-    if (!email || email.length < 5)
-      return false;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || email.length < 5) return false;
+    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
+  }
+  function isValidPhone(phone) {
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    return phoneRegex.test(phone);
+  }
+
+  // src/shared/debugConfig.js
+  var DEBUG_ENABLED_GLOBALLY = false;
+  var DEBUG_ACCOUNT_IDS = [
+    // Example: 'ABC123',
+    // Example: 'XYZ789',
+  ];
+
+  // src/shared/debugUtils.js
+  function isDebugEnabled() {
+    if (DEBUG_ENABLED_GLOBALLY) {
+      return true;
+    }
+    try {
+      const klaviyo2 = window.klaviyo || [];
+      if (klaviyo2.account && typeof klaviyo2.account === "function") {
+        const accountId = klaviyo2.account();
+        if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {
+          return true;
+        }
+      }
+    } catch (err) {
+    }
+    return false;
+  }
+  function createDebugLogger(prefix, legacyEnabled = true) {
+    return function debugLog2(...args) {
+      if (legacyEnabled && isDebugEnabled()) {
+        console.log(prefix, ...args);
+      }
+    };
+  }
+
+  // src/cloudbeds/generalUtils.js
+  var logger = createDebugLogger("[Klaviyo Hotel Tracking]", DEBUG);
+  function debugLog(message, data) {
+    logger(message, data || "");
   }
   function isOnGuestsPage() {
     return window.location.href.indexOf("/guests") > -1 || document.getElementById("guest-form");

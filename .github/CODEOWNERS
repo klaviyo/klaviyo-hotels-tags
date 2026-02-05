@@ -1,0 +1,11 @@
+# Auto-assign code owners for review
+# This file defines who should review changes to specific paths
+
+# Global owner for all files
+* @cbarley10
+
+# Shared utilities require review
+/src/shared/ @cbarley10
+
+# Production deployment workflow requires review
+/.github/workflows/ @cbarley10

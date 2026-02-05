@@ -2,6 +2,24 @@
   // src/guesty/constants.js
   var DEBUG = true;
 
+  // src/shared/validationUtils.js
+  function isValidEmail(email) {
+    if (!email || email.length < 5) return false;
+    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  }
+  function isValidPhone(phone) {
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    return phoneRegex.test(phone);
+  }
+
+  // src/shared/debugConfig.js
+  var DEBUG_ENABLED_GLOBALLY = false;
+  var DEBUG_ACCOUNT_IDS = [
+    // Example: 'ABC123',
+    // Example: 'XYZ789',
+  ];
+
   // src/guesty/generalUtils.js
   function getCurrentPageURL() {
     return window.location.pathname;
@@ -14,16 +32,24 @@
       minOccupancy: params.get("minOccupancy")
     };
   }
-  function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-  function isValidPhone(phone) {
-    const phoneRegex = /^\+?[0-9]{10,15}$/;
-    return phoneRegex.test(phone);
+  function isDebugEnabled() {
+    if (DEBUG_ENABLED_GLOBALLY) {
+      return true;
+    }
+    try {
+      const klaviyo2 = window.klaviyo || [];
+      if (klaviyo2.account && typeof klaviyo2.account === "function") {
+        const accountId = klaviyo2.account();
+        if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {
+          return true;
+        }
+      }
+    } catch (err) {
+    }
+    return false;
   }
   function debugLog(...args) {
-    if (DEBUG) {
+    if (DEBUG && isDebugEnabled()) {
       console.log(...args);
     }
   }
@@ -160,8 +186,7 @@
     }
   }
   function trackStartedCheckoutOnce() {
-    if (checkoutTracked || !quoteResponseData)
-      return;
+    if (checkoutTracked || !quoteResponseData) return;
     checkoutTracked = true;
     trackViewedListingOrCheckout("Started Checkout", quoteResponseData, totalValue, additionalFields);
   }

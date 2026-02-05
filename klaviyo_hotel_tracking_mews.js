@@ -21,8 +21,7 @@
     debugLog("Stored view_item data:", viewItemData);
   }
   function calculateNights(startDate, endDate) {
-    if (!startDate || !endDate)
-      return null;
+    if (!startDate || !endDate) return null;
     try {
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -247,47 +246,39 @@
     }
     debugLog("Searching for email field...");
     let emailField = searchDoc.querySelector('input[name="email"]');
-    if (!emailField)
-      emailField = searchDoc.querySelector('input[id="email"]');
-    if (!emailField)
-      emailField = searchDoc.querySelector('[data-test-id="checkout-field-email"]');
-    if (!emailField)
-      emailField = searchDoc.querySelector('input[type="email"]');
-    if (!emailField)
-      emailField = searchDoc.querySelector('input[autocomplete="email"]');
+    if (!emailField) emailField = searchDoc.querySelector('input[id="email"]');
+    if (!emailField) emailField = searchDoc.querySelector('[data-test-id="checkout-field-email"]');
+    if (!emailField) emailField = searchDoc.querySelector('input[type="email"]');
+    if (!emailField) emailField = searchDoc.querySelector('input[autocomplete="email"]');
     debugLog("Searching for phone field...");
     let phoneField = searchDoc.querySelector('input[name="phone"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('input[id="phone"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('[data-test-id="checkout-field-phone"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('input[name="phoneNumber"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('input[type="tel"]');
-    if (!phoneField)
-      phoneField = searchDoc.querySelector('input[autocomplete="tel"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('input[id="phone"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('[data-test-id="checkout-field-phone"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('input[name="phoneNumber"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('input[type="tel"]');
+    if (!phoneField) phoneField = searchDoc.querySelector('input[autocomplete="tel"]');
     debugLog("Email field found:", !!emailField);
-    if (emailField)
-      debugLog("Email field details:", { name: emailField.name, id: emailField.id, type: emailField.type });
+    if (emailField) debugLog("Email field details:", { name: emailField.name, id: emailField.id, type: emailField.type });
     debugLog("Phone field found:", !!phoneField);
-    if (phoneField)
-      debugLog("Phone field details:", { name: phoneField.name, id: phoneField.id, type: phoneField.type });
+    if (phoneField) debugLog("Phone field details:", { name: phoneField.name, id: phoneField.id, type: phoneField.type });
     const email = emailField ? emailField.value.trim() : "";
     const phone = phoneField ? phoneField.value.trim() : "";
     debugLog("Email value:", email);
     debugLog("Phone value:", phone);
     const hasValidEmail = email && isValidEmail(email);
-    const hasPhone = phone && phone.length > 0;
+    const hasValidPhone = phone && isValidPhone(phone);
     if (!hasValidEmail && email) {
       debugLog("Email invalid or incomplete:", email);
     }
-    if ((hasValidEmail || hasPhone) && !identifyAttempted) {
+    if (!hasValidPhone && phone) {
+      debugLog("Phone invalid or incomplete:", phone);
+    }
+    if ((hasValidEmail || hasValidPhone) && !identifyAttempted) {
       const identifyData = {};
       if (hasValidEmail) {
         identifyData["email"] = email;
       }
-      if (hasPhone) {
+      if (hasValidPhone) {
         identifyData["phone_number"] = phone;
       }
       if (identifyData.email || identifyData.phone_number) {
@@ -311,17 +302,53 @@
     }
   }
 
-  // src/mews/generalUtils.js
-  function debugLog(message, data) {
-    if (DEBUG) {
-      console.log("[Klaviyo Hotel Tracking] " + message, data || "");
-    }
-  }
+  // src/shared/validationUtils.js
   function isValidEmail(email) {
-    if (!email || email.length < 5)
-      return false;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || email.length < 5) return false;
+    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
+  }
+  function isValidPhone(phone) {
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    return phoneRegex.test(phone);
+  }
+
+  // src/shared/debugConfig.js
+  var DEBUG_ENABLED_GLOBALLY = false;
+  var DEBUG_ACCOUNT_IDS = [
+    // Example: 'ABC123',
+    // Example: 'XYZ789',
+  ];
+
+  // src/shared/debugUtils.js
+  function isDebugEnabled() {
+    if (DEBUG_ENABLED_GLOBALLY) {
+      return true;
+    }
+    try {
+      const klaviyo2 = window.klaviyo || [];
+      if (klaviyo2.account && typeof klaviyo2.account === "function") {
+        const accountId = klaviyo2.account();
+        if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {
+          return true;
+        }
+      }
+    } catch (err) {
+    }
+    return false;
+  }
+  function createDebugLogger(prefix, legacyEnabled = true) {
+    return function debugLog2(...args) {
+      if (legacyEnabled && isDebugEnabled()) {
+        console.log(prefix, ...args);
+      }
+    };
+  }
+
+  // src/mews/generalUtils.js
+  var logger = createDebugLogger("[Klaviyo Hotel Tracking]", DEBUG);
+  function debugLog(message, data) {
+    logger(message, data || "");
   }
   function isOnGuestsPage() {
     debugLog("Checking if on guests page", window.location.href);

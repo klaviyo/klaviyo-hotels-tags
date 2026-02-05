@@ -1,6 +1,11 @@
 // General utility functions
 
 import { DEBUG } from './constants.js';
+import { isValidEmail, isValidPhone } from '../shared/validationUtils.js';
+import { DEBUG_ENABLED_GLOBALLY, DEBUG_ACCOUNT_IDS } from '../shared/debugConfig.js';
+
+// Export shared validation functions
+export { isValidEmail, isValidPhone };
 
 export function getCurrentPageURL() {
     return window.location.pathname;
@@ -15,18 +20,31 @@ export function getURLParams() {
     };
 }
 
-export function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
+// Check if debugging is enabled for the current account
+function isDebugEnabled() {
+    // If globally enabled, always log
+    if (DEBUG_ENABLED_GLOBALLY) {
+        return true;
+    }
 
-export function isValidPhone(phone) {
-    const phoneRegex = /^\+?[0-9]{10,15}$/;
-    return phoneRegex.test(phone);
+    // Check if current account is in the debug list
+    try {
+        const klaviyo = window.klaviyo || [];
+        if (klaviyo.account && typeof klaviyo.account === 'function') {
+            const accountId = klaviyo.account();
+            if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {
+                return true;
+            }
+        }
+    } catch (err) {
+        // Silently fail if we can't get account ID
+    }
+
+    return false;
 }
 
 export function debugLog(...args) {
-    if (DEBUG) {
+    if (DEBUG && isDebugEnabled()) {
         console.log(...args);
     }
 }

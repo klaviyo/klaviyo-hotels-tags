@@ -1,6 +1,6 @@
 // Klaviyo-specific utility functions
 
-import { debugLog, isValidEmail } from './generalUtils.js';
+import { debugLog, isValidEmail, isValidPhone } from './generalUtils.js';
 
 // Track if we've already attempted to identify the user
 let identifyAttempted = false;
@@ -346,23 +346,27 @@ export function performIdentification(source) {
     debugLog('Email value:', email);
     debugLog('Phone value:', phone);
 
-    // Validate email if present
+    // Validate email and phone if present
     const hasValidEmail = email && isValidEmail(email);
-    const hasPhone = phone && phone.length > 0;
+    const hasValidPhone = phone && isValidPhone(phone);
 
     if (!hasValidEmail && email) {
         debugLog('Email invalid or incomplete:', email);
     }
 
+    if (!hasValidPhone && phone) {
+        debugLog('Phone invalid or incomplete:', phone);
+    }
+
     // Only identify if we have valid email or phone
-    if ((hasValidEmail || hasPhone) && !identifyAttempted) {
+    if ((hasValidEmail || hasValidPhone) && !identifyAttempted) {
         const identifyData = {};
 
         if (hasValidEmail) {
             identifyData['email'] = email;
         }
 
-        if (hasPhone) {
+        if (hasValidPhone) {
             identifyData['phone_number'] = phone;
         }
 
