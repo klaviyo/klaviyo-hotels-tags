@@ -11,7 +11,6 @@ This Google Tag Manager template enables seamless tracking of hotel booking even
 - 👤 **Customer Identification**: Automatically identifies guests with email/phone
 - 🎯 **Rich Event Data**: Captures dates, pricing, guest count, property details
 - 🔧 **Easy Setup**: Simple GTM installation with no coding required
-- 🐛 **Debug Mode**: Built-in logging for troubleshooting
 
 ## 📋 Supported Platforms
 
@@ -22,7 +21,7 @@ Tracks events from Cloudbeds booking engine via GTM dataLayer events.
 Tracks events from Mews Distributor (booking engine) via GTM dataLayer events.
 
 ### Guesty
-Tracks events directly from Guesty booking flow via network interception.
+Tracks events directly from Guesty booking via GTM and direct DOM elements.
 
 ## 🎯 Events Tracked
 
@@ -49,27 +48,23 @@ Tracks events directly from Guesty booking flow via network interception.
 
 ### Setup Instructions
 
-#### Step 1: Import Template to GTM
+#### Step 1: Install Klaviyo Hotels Tracking Template
 
-1. Download the template file: [`template_hotel.tpl`](template_hotel.tpl)
-2. In Google Tag Manager, go to **Templates** → **Tag Templates**
-3. Click **New** → **Import**
-4. Select the downloaded `.tpl` file
-5. Click **Save**
+1. In Google Tag Manager, go to the Templates section in the sidebar
+2. Under Tag Templates, click "Search Gallery"
+3. Look for "Klaviyo Hotels Tracking"
+4. Install the template
 
 #### Step 2: Create a New Tag
 
 1. Go to **Tags** → **New**
 2. Click **Tag Configuration**
-3. Select **Klaviyo Hotel Tracking** from your templates
+3. Select **Klaviyo Hotels Tracking** from your templates
 4. Configure the following:
 
    **Required Fields:**
    - **Klaviyo Public API Key**: Your Klaviyo account public key (6-character code)
-   - **Integration Type**: Select your booking platform (Cloudbeds, Mews, or Guesty)
-
-   **Optional Fields:**
-   - **Debug Mode**: Enable to see console logs (recommended for initial setup)
+   - **Integration Name**: Select your booking platform (Cloudbeds, Mews, or Guesty)
 
 5. **Triggering**: Set to fire on **All Pages** or specific pages where your booking engine loads
 
@@ -81,11 +76,9 @@ Tracks events directly from Guesty booking flow via network interception.
 
 #### Step 4: Test
 
-1. Enable **Debug Mode** in the tag configuration
-2. Use **GTM Preview Mode** to test
-3. Complete a booking flow on your website
-4. Check browser console for `[Klaviyo Hotel Tracking]` logs
-5. Verify events appear in your Klaviyo account
+1. Use **GTM Preview Mode** to test
+2. Complete a booking flow on your website
+3. Verify events appear in your Klaviyo account
 
 ## 🔧 Configuration
 
@@ -95,16 +88,6 @@ Tracks events directly from Guesty booking flow via network interception.
 2. Go to **Settings** → **Account** → **Settings** → **API Keys**
 3. Copy your **Public API Key** (6-character code, e.g., `ABC123`)
 4. Paste into the GTM tag configuration
-
-### Debug Mode
-
-Enable debug mode during setup to see detailed logging:
-- Event tracking confirmations
-- User identification status
-- Data payload details
-- Error messages
-
-**Important:** Disable debug mode in production to avoid console clutter.
 
 ## 📊 Using Data in Klaviyo
 
@@ -121,20 +104,11 @@ Once events are flowing to Klaviyo, you can:
 - Pre-arrival information and reminders
 - Post-stay review requests
 
-### Personalize Campaigns
+### Personalize Emails
 Use event properties in emails:
 - Property name and details
 - Booking dates and guest count
 - Pricing information
-- Custom recommendations
-
-## 🏗️ Technical Details
-
-### Integration Methods
-
-**Cloudbeds & Mews**: Listen to GTM dataLayer events pushed by the booking engine
-
-**Guesty**: Intercepts network requests to capture booking data directly from API calls
 
 ### Browser Compatibility
 - All modern browsers (Chrome, Firefox, Safari, Edge)
@@ -145,41 +119,19 @@ Use event properties in emails:
 - Asynchronous event tracking
 - No blocking operations
 
-## 🐛 Troubleshooting
-
-### Events Not Appearing in Klaviyo
-
-1. **Enable Debug Mode** in GTM tag configuration
-2. Check browser console for `[Klaviyo Hotel Tracking]` logs
-3. Verify Klaviyo Public API Key is correct
-4. Ensure GTM tag is firing (use Preview mode)
-5. Check that your booking engine is supported
-
-### Guest Not Being Identified
-
-- Guest identification happens when email/phone is entered
-- Check console logs for "User identified" messages
-- Verify form fields match expected selectors
-
 ### Need Help?
 
-- Check `src/DEVELOPMENT.md` for technical documentation
-- Review browser console logs with Debug Mode enabled
-- Contact your implementation team
+- Reach out to our support team at support@klaviyo.com
+- Check out our help center [Klaviyo Documentation](https://help.klaviyo.com/)
 
 ## 📚 Resources
 
 - [Klaviyo Documentation](https://help.klaviyo.com/)
 - [Google Tag Manager Help](https://support.google.com/tagmanager)
-- [Technical Development Guide](src/DEVELOPMENT.md)
 
 ## 📝 License
 
 Copyright © Klaviyo. All rights reserved.
-
-## 🤝 Support
-
-For technical support or questions about implementation, please contact your Klaviyo account team.
 
 ---
 

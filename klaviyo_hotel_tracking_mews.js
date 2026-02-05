@@ -625,7 +625,6 @@
   // src/mews/klaviyo_hotel_tracking.js
   (function() {
     debugLog("Script initialized");
-    debugLog("Connor Test 2");
     const windowDataLayer = window.dataLayer;
     if (!windowDataLayer) {
       debugLog("WARNING: dataLayer not found on window object");
