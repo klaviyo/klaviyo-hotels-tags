@@ -2,10 +2,10 @@
 # This file defines who should review changes to specific paths
 
 # Global owner for all files
-* @connor.barley
+* @cbarley10
 
 # Shared utilities require review
-/src/shared/ @connor.barley
+/src/shared/ @cbarley10
 
 # Production deployment workflow requires review
-/.github/workflows/ @connor.barley
+/.github/workflows/ @cbarley10
