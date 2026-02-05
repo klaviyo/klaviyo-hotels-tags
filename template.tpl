@@ -13,12 +13,13 @@ ___INFO___
   "id": "cvt_temp_public_id",
   "version": 1,
   "securityGroups": [],
-  "displayName": "DEBUG - Klaviyo Hotel Template Tag",
+  "displayName": "Klaviyo Hotel Template Tag",
+  "categories": ["EMAIL_MARKETING", "ANALYTICS", "MARKETING"],
   "brand": {
     "id": "brand_dummy",
     "displayName": ""
   },
-  "description": "[DEBUGGING] Klaviyo Hotel Template for Mews, Cloudbeds, and Guesty",
+  "description": "Klaviyo Hotel Template for Mews, Cloudbeds, and Guesty",
   "containerContexts": [
     "WEB"
   ]

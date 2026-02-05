@@ -1,0 +1,5 @@
+homepage: "https://www.klaviyo.com"
+documentation: "https://github.com/klaviyo/klaviyo-hotels-tags/blob/master/README.md"
+versions:
+  - sha: 15f688ac781b86b843cf3322fd62092c568aab34
+    changeNotes: Initial release.
