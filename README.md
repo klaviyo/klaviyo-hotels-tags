@@ -29,7 +29,8 @@ Tracks events directly from Guesty booking via GTM and direct DOM elements.
 |-------|-------------|---------|
 | **Viewed Listing** | Guest views property details | Property/room page view |
 | **Started Checkout** | Guest begins checkout process | Checkout initiated |
-| **Identified Guest** | Guest enters contact info | Email/phone entered |
+
+Additionally, we will identify a guest on the checkout if they are anonymouos after they fill in their email or phone number.
 
 ### Event Properties Captured:
 - Property name, ID, location
