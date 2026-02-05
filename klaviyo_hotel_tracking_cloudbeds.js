@@ -212,10 +212,33 @@
     return phoneRegex.test(phone);
   }
 
+  // src/shared/debugConfig.js
+  var DEBUG_ENABLED_GLOBALLY = false;
+  var DEBUG_ACCOUNT_IDS = [
+    // Example: 'ABC123',
+    // Example: 'XYZ789',
+  ];
+
   // src/shared/debugUtils.js
-  function createDebugLogger(prefix, enabled = true) {
+  function isDebugEnabled() {
+    if (DEBUG_ENABLED_GLOBALLY) {
+      return true;
+    }
+    try {
+      const klaviyo2 = window.klaviyo || [];
+      if (klaviyo2.account && typeof klaviyo2.account === "function") {
+        const accountId = klaviyo2.account();
+        if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {
+          return true;
+        }
+      }
+    } catch (err) {
+    }
+    return false;
+  }
+  function createDebugLogger(prefix, legacyEnabled = true) {
     return function debugLog2(...args) {
-      if (enabled) {
+      if (legacyEnabled && isDebugEnabled()) {
         console.log(prefix, ...args);
       }
     };

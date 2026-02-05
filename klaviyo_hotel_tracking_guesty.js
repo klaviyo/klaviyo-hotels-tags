@@ -14,6 +14,13 @@
     return phoneRegex.test(phone);
   }
 
+  // src/shared/debugConfig.js
+  var DEBUG_ENABLED_GLOBALLY = false;
+  var DEBUG_ACCOUNT_IDS = [
+    // Example: 'ABC123',
+    // Example: 'XYZ789',
+  ];
+
   // src/guesty/generalUtils.js
   function getCurrentPageURL() {
     return window.location.pathname;
@@ -26,8 +33,24 @@
       minOccupancy: params.get("minOccupancy")
     };
   }
+  function isDebugEnabled() {
+    if (DEBUG_ENABLED_GLOBALLY) {
+      return true;
+    }
+    try {
+      const klaviyo2 = window.klaviyo || [];
+      if (klaviyo2.account && typeof klaviyo2.account === "function") {
+        const accountId = klaviyo2.account();
+        if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {
+          return true;
+        }
+      }
+    } catch (err) {
+    }
+    return false;
+  }
   function debugLog(...args) {
-    if (DEBUG) {
+    if (DEBUG && isDebugEnabled()) {
       console.log(...args);
     }
   }
