@@ -237,8 +237,7 @@
   }
   function createDebugLogger(prefix, legacyEnabled = true) {
     return function debugLog2(...args) {
-      const shouldLog = legacyEnabled || isDebugEnabled();
-      if (shouldLog) {
+      if (legacyEnabled && isDebugEnabled()) {
         console.log(prefix, ...args);
       }
     };

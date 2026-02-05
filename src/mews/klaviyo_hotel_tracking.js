@@ -4,7 +4,6 @@ import { trackViewedListing, trackStartedCheckout, attemptIdentify } from './kla
 
 (function() {
     debugLog('Script initialized');
-    debugLog("Connor Test 2")
     const windowDataLayer = window.dataLayer;
 
     // Check if dataLayer exists
