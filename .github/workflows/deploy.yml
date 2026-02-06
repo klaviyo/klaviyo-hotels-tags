@@ -29,6 +29,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Create .env file
+        run: |
+          echo "MONITORING_ACCOUNT=${{ secrets.MONITORING_ACCOUNT }}" >> .env
+          echo "MONITORING_PROFILE_ID=${{ secrets.MONITORING_PROFILE_ID }}" >> .env
+          echo "DEBUG_ACCOUNT_IDS=${{ secrets.DEBUG_ACCOUNT_IDS }}" >> .env
+
       - name: Build all integrations
         run: npm run build
 

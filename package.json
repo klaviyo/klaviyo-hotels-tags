@@ -4,22 +4,23 @@
   "description": "Klaviyo hotel tracking for GTM",
   "scripts": {
     "build": "npm run build:cloudbeds && npm run build:mews && npm run build:guesty",
-    "build:cloudbeds": "esbuild src/cloudbeds/klaviyo_hotel_tracking.js --bundle --outfile=public/klaviyo_hotel_tracking_cloudbeds.js --format=iife",
-    "build:mews": "esbuild src/mews/klaviyo_hotel_tracking.js --bundle --outfile=public/klaviyo_hotel_tracking_mews.js --format=iife",
-    "build:guesty": "esbuild src/guesty/klaviyo_hotel_tracking.js --bundle --outfile=public/klaviyo_hotel_tracking_guesty.js --format=iife",
+    "build:cloudbeds": "node build.js cloudbeds",
+    "build:mews": "node build.js mews",
+    "build:guesty": "node build.js guesty",
     "deploy": "npm run build && surge public",
     "deploy:cloudbeds": "npm run build:cloudbeds && surge public klaviyo-hotel-cloudbeds.surge.sh",
     "deploy:mews": "npm run build:mews && surge public klaviyo-hotel-mews.surge.sh",
     "deploy:guesty": "npm run build:guesty && surge public klaviyo-hotel-guesty.surge.sh",
-    "watch": "esbuild src/cloudbeds/klaviyo_hotel_tracking.js --bundle --outfile=public/klaviyo_hotel_tracking_cloudbeds.js --format=iife --watch",
-    "watch:mews": "esbuild src/mews/klaviyo_hotel_tracking.js --bundle --outfile=public/klaviyo_hotel_tracking_mews.js --format=iife --watch",
-    "watch:guesty": "esbuild src/guesty/klaviyo_hotel_tracking.js --bundle --outfile=public/klaviyo_hotel_tracking_guesty.js --format=iife --watch",
+    "watch": "node build.js cloudbeds --watch",
+    "watch:mews": "node build.js mews --watch",
+    "watch:guesty": "node build.js guesty --watch",
     "dev": "nodemon --watch src --ext js --exec \"npm run deploy\"",
     "dev:cloudbeds": "nodemon --watch src/cloudbeds --watch src/shared --ext js --exec \"npm run deploy:cloudbeds\"",
     "dev:mews": "nodemon --watch src/mews --watch src/shared --ext js --exec \"npm run deploy:mews\"",
     "dev:guesty": "nodemon --watch src/guesty --watch src/shared --ext js --exec \"npm run deploy:guesty\""
   },
   "devDependencies": {
+    "dotenv": "^17.2.4",
     "esbuild": "^0.25.0",
     "nodemon": "^3.1.11"
   }

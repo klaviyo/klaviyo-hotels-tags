@@ -68,17 +68,38 @@ Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Clo
    - Uses stored listing data from Viewed Listing event
    - Extracts checkout details (dates, guest count) from URL parameters
    - Identifies user from email/phone form fields on blur
-3. **Error Monitoring** - Sends alerts to monitoring account (UcwNrH) when critical errors occur
+3. **Error Monitoring** - Sends alerts to monitoring account when critical errors occur
    - Only monitors `klaviyo.track()` failures
    - Uses direct Klaviyo API calls (no second script instance)
    - Includes error metadata: Failed Event, Error Cause, Customer Account ID
+   - Monitoring account credentials are configured via `.env` file
 
 ## Setup
 
-Install dependencies:
+### 1. Install dependencies
+
 ```bash
 npm install
 ```
+
+### 2. Configure environment variables
+
+Create a `.env` file in the project root with your API keys:
+
+```bash
+# Klaviyo Monitoring Account Configuration
+
+# Monitoring account for error tracking (Guesty integration)
+MONITORING_ACCOUNT=your_monitoring_account_id
+MONITORING_PROFILE_ID=guesty-onsite-monitoring
+
+# Debug Account IDs (comma-separated list of Klaviyo account IDs to enable debugging for)
+DEBUG_ACCOUNT_IDS=
+```
+
+**Important:** The `.env` file is excluded from git (see `.gitignore`). Never commit API keys to the repository.
+
+These environment variables are injected at build time and replace the placeholders in the source code.
 
 ## Development Workflow
 
@@ -174,7 +195,26 @@ Production scripts are automatically deployed to GitHub Pages when you push to t
 3. Merge to `master`
 4. GitHub Actions automatically builds and deploys to GitHub Pages
 
-No manual deployment needed for production!
+**Configuring Production Environment Variables:**
+
+To set API keys for production deployment, configure GitHub Secrets:
+
+1. Go to your repository on GitHub
+2. Navigate to **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Add the following secrets:
+   - `MONITORING_ACCOUNT` - Your monitoring account ID
+   - `MONITORING_PROFILE_ID` - Profile ID for monitoring (e.g., `guesty-onsite-monitoring`)
+   - `DEBUG_ACCOUNT_IDS` - Comma-separated list of account IDs to enable debugging
+
+These secrets are automatically injected into the `.env` file during the GitHub Actions build process.
+
+**Updating Production Environment Variables:**
+
+To troubleshoot issues in production, you can update the GitHub Secrets at any time:
+1. Update the secret value in GitHub Settings
+2. Re-run the workflow or push a new commit to `master`
+3. The new environment variables will be deployed
 
 ## Usage
 
