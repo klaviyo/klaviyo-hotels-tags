@@ -93,8 +93,9 @@ Create a `.env` file in the project root with your API keys:
 MONITORING_ACCOUNT=your_monitoring_account_id
 MONITORING_PROFILE_ID=guesty-onsite-monitoring
 
-# Debug Account IDs (comma-separated list of Klaviyo account IDs to enable debugging for)
-DEBUG_ACCOUNT_IDS=
+# Debug Account IDs (JSON array of Klaviyo account IDs to enable debugging for)
+# Example: DEBUG_ACCOUNT_IDS=["ABC123","XYZ789"]
+DEBUG_ACCOUNT_IDS=[]
 ```
 
 **Important:** The `.env` file is excluded from git (see `.gitignore`). Never commit API keys to the repository.
@@ -205,7 +206,7 @@ To set API keys for production deployment, configure GitHub Secrets:
 4. Add the following secrets:
    - `MONITORING_ACCOUNT` - Your monitoring account ID
    - `MONITORING_PROFILE_ID` - Profile ID for monitoring (e.g., `guesty-onsite-monitoring`)
-   - `DEBUG_ACCOUNT_IDS` - Comma-separated list of account IDs to enable debugging
+   - `DEBUG_ACCOUNT_IDS` - JSON array of account IDs to enable debugging (e.g., `["ABC123","XYZ789"]`)
 
 These secrets are automatically injected into the `.env` file during the GitHub Actions build process.
 

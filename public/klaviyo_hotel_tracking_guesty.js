@@ -1,4 +1,7 @@
 (() => {
+  // <define:process.env.DEBUG_ACCOUNT_IDS>
+  var define_process_env_DEBUG_ACCOUNT_IDS_default = [];
+
   // src/guesty/constants.js
   var DEBUG = true;
 
@@ -15,10 +18,7 @@
 
   // src/shared/debugConfig.js
   var DEBUG_ENABLED_GLOBALLY = false;
-  var DEBUG_ACCOUNT_IDS = [
-    // Example: 'ABC123',
-    // Example: 'XYZ789',
-  ];
+  var DEBUG_ACCOUNT_IDS = define_process_env_DEBUG_ACCOUNT_IDS_default || [];
 
   // src/guesty/generalUtils.js
   function getCurrentPageURL() {

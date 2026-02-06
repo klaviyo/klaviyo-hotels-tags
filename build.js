@@ -9,7 +9,10 @@ require('dotenv').config();
 // Get environment variables with defaults
 const MONITORING_ACCOUNT = process.env.MONITORING_ACCOUNT || '';
 const MONITORING_PROFILE_ID = process.env.MONITORING_PROFILE_ID || 'guesty-onsite-monitoring';
-const DEBUG_ACCOUNT_IDS = process.env.DEBUG_ACCOUNT_IDS || '';
+
+// Parse DEBUG_ACCOUNT_IDS from JSON array string
+const DEBUG_ACCOUNT_IDS_RAW = process.env.DEBUG_ACCOUNT_IDS || '[]';
+const DEBUG_ACCOUNT_IDS = JSON.parse(DEBUG_ACCOUNT_IDS_RAW);
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -41,7 +44,7 @@ async function build(config) {
     define: {
       'process.env.MONITORING_ACCOUNT': JSON.stringify(MONITORING_ACCOUNT),
       'process.env.MONITORING_PROFILE_ID': JSON.stringify(MONITORING_PROFILE_ID),
-      'process.env.DEBUG_ACCOUNT_IDS': JSON.stringify(DEBUG_ACCOUNT_IDS)
+      'process.env.DEBUG_ACCOUNT_IDS': JSON.stringify(DEBUG_ACCOUNT_IDS) // Injected as array
     }
   };
 
