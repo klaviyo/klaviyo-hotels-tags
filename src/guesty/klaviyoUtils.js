@@ -5,9 +5,9 @@ import { isValidEmail, isValidPhone, debugLog } from './generalUtils.js';
 // Initialize Klaviyo
 const klaviyo = window.klaviyo || [];
 
-// Monitoring account for error tracking
-const MONITORING_ACCOUNT = 'UcwNrH';
-const MONITORING_PROFILE_ID = 'guesty-onsite-monitoring';
+// Monitoring account for error tracking (loaded from .env at build time)
+const MONITORING_ACCOUNT = process.env.MONITORING_ACCOUNT;
+const MONITORING_PROFILE_ID = process.env.MONITORING_PROFILE_ID;
 
 // Track state for checkout event
 let checkoutTracked = false;
