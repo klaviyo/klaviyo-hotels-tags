@@ -10,11 +10,13 @@
     "begin_checkout": "Started Checkout"
   };
 
+  // src/shared/klaviyoInstance.js
+  var klaviyo = window.klaviyo || [];
+
   // src/mews/klaviyoUtils.js
   var identifyAttempted = false;
   var reservationData = null;
   var viewItemData = null;
-  var klaviyo = window.klaviyo || [];
   function setReservationData(data) {
     reservationData = data;
     debugLog("Stored reservation data:", data);
@@ -326,9 +328,8 @@
       return true;
     }
     try {
-      const klaviyo2 = window.klaviyo || [];
-      if (klaviyo2.account && typeof klaviyo2.account === "function") {
-        const accountId = klaviyo2.account();
+      if (klaviyo.account && typeof klaviyo.account === "function") {
+        const accountId = klaviyo.account();
         if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {
           return true;
         }
@@ -589,9 +590,8 @@
       debugLog("Missing email or identify handler");
       return;
     }
-    const klaviyo2 = window.klaviyo || [];
-    if (klaviyo2.isIdentified && typeof klaviyo2.isIdentified === "function") {
-      klaviyo2.isIdentified().then(function(isIdentified) {
+    if (klaviyo.isIdentified && typeof klaviyo.isIdentified === "function") {
+      klaviyo.isIdentified().then(function(isIdentified) {
         if (isIdentified) {
           debugLog("User already identified via Klaviyo, skipping");
           return;
@@ -606,7 +606,6 @@
     }
   }
   function performIdentifyFromEvent(email, fullName) {
-    const klaviyo2 = window.klaviyo || [];
     const identifyData = { email };
     if (fullName) {
       const nameParts = fullName.trim().split(" ");
@@ -618,7 +617,7 @@
       }
     }
     debugLog("Identifying user from event data:", identifyData);
-    klaviyo2.identify(identifyData);
+    klaviyo.identify(identifyData);
   }
 
   // src/mews/klaviyo_hotel_tracking.js

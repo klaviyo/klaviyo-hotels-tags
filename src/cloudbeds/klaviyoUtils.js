@@ -1,12 +1,10 @@
 // Klaviyo-specific utility functions
 
 import { debugLog, isValidEmail, isValidPhone } from './generalUtils.js';
+import { klaviyo } from '../shared/klaviyoInstance.js';
 
 // Track if we've already attempted to identify the user
 let identifyAttempted = false;
-
-// Initialize Klaviyo
-const klaviyo = window.klaviyo || [];
 
 // Build payload for Viewed Listing event
 export function buildViewedListingPayload(itemData, ecommerceData) {

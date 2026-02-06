@@ -3,6 +3,7 @@
 import { DEBUG } from './constants.js';
 import { isValidEmail, isValidPhone } from '../shared/validationUtils.js';
 import { DEBUG_ENABLED_GLOBALLY, DEBUG_ACCOUNT_IDS } from '../shared/debugConfig.js';
+import { klaviyo } from '../shared/klaviyoInstance.js';
 
 // Export shared validation functions
 export { isValidEmail, isValidPhone };
@@ -29,7 +30,6 @@ function isDebugEnabled() {
 
     // Check if current account is in the debug list
     try {
-        const klaviyo = window.klaviyo || [];
         if (klaviyo.account && typeof klaviyo.account === 'function') {
             const accountId = klaviyo.account();
             if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {

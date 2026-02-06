@@ -1,6 +1,7 @@
 // Shared debug utilities
 
 import { DEBUG_ENABLED_GLOBALLY, DEBUG_ACCOUNT_IDS } from './debugConfig.js';
+import { klaviyo } from './klaviyoInstance.js';
 
 // Check if debugging is enabled for the current account
 function isDebugEnabled() {
@@ -11,7 +12,6 @@ function isDebugEnabled() {
 
     // Check if current account is in the debug list
     try {
-        const klaviyo = window.klaviyo || [];
         if (klaviyo.account && typeof klaviyo.account === 'function') {
             const accountId = klaviyo.account();
             if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {

@@ -1,6 +1,7 @@
 // Klaviyo-specific utility functions
 
 import { debugLog, isValidEmail, isValidPhone } from './generalUtils.js';
+import { klaviyo } from '../shared/klaviyoInstance.js';
 
 // Track if we've already attempted to identify the user
 let identifyAttempted = false;
@@ -10,9 +11,6 @@ let reservationData = null;
 
 // Store view_item data for later enrichment
 let viewItemData = null;
-
-// Initialize Klaviyo
-const klaviyo = window.klaviyo || [];
 
 export function setReservationData(data) {
     reservationData = data;

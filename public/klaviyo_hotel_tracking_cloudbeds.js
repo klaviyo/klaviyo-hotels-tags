@@ -11,9 +11,11 @@
     "begin_checkout": "Started Checkout"
   };
 
+  // src/shared/klaviyoInstance.js
+  var klaviyo = window.klaviyo || [];
+
   // src/cloudbeds/klaviyoUtils.js
   var identifyAttempted = false;
-  var klaviyo = window.klaviyo || [];
   function buildViewedListingPayload(itemData, ecommerceData) {
     debugLog("Building Viewed Listing payload");
     const pricePerNight = itemData.price || 0;
@@ -224,9 +226,8 @@
       return true;
     }
     try {
-      const klaviyo2 = window.klaviyo || [];
-      if (klaviyo2.account && typeof klaviyo2.account === "function") {
-        const accountId = klaviyo2.account();
+      if (klaviyo.account && typeof klaviyo.account === "function") {
+        const accountId = klaviyo.account();
         if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {
           return true;
         }
