@@ -3,6 +3,7 @@
 import { debugLog } from './generalUtils.js';
 import { KLAVIYO_EVENT_KEY_MAP } from './constants.js';
 import { setReservationData, setViewItemData } from './klaviyoUtils.js';
+import { klaviyo } from '../shared/klaviyoInstance.js';
 
 // Parse event data from different formats (gtag vs GA4)
 export function parseEventData(event) {
@@ -177,7 +178,6 @@ function identifyFromEventData(email, fullName, handlers) {
         return;
     }
 
-    const klaviyo = window.klaviyo || [];
 
     // Check if already identified
     if (klaviyo.isIdentified && typeof klaviyo.isIdentified === 'function') {
@@ -199,7 +199,6 @@ function identifyFromEventData(email, fullName, handlers) {
 }
 
 function performIdentifyFromEvent(email, fullName) {
-    const klaviyo = window.klaviyo || [];
     const identifyData = { email: email };
 
     // Parse name if provided

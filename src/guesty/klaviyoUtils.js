@@ -1,9 +1,7 @@
 // Klaviyo-specific utility functions
 
 import { isValidEmail, isValidPhone, debugLog } from './generalUtils.js';
-
-// Initialize Klaviyo
-const klaviyo = window.klaviyo || [];
+import { klaviyo } from '../shared/klaviyoInstance.js';
 
 // Monitoring account for error tracking (loaded from .env at build time)
 const MONITORING_ACCOUNT = process.env.MONITORING_ACCOUNT;

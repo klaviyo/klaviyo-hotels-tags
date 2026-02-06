@@ -8,6 +8,7 @@ import {
     setLastViewedListing,
     getLastViewedListing
 } from './klaviyoUtils.js';
+import { klaviyo } from '../shared/klaviyoInstance.js';
 
 (function () {
     const originalFetch = window.fetch;
@@ -15,7 +16,6 @@ import {
     const FIELDS = "_id+title+nickname+type+roomType+propertyType+accommodates+amenities+bathrooms+bedrooms+beds+bedType+timezone+defaultCheckInTime+defaultCheckOutTime+address+picture+pictures+prices+publicDescription+terms+taxes+reviews+tags+parentId++";
 
     // Initialize Klaviyo
-    const klaviyo = window.klaviyo || [];
 
     // Intercept fetch requests
     window.fetch = async function (...args) {

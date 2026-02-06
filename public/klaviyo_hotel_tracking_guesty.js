@@ -20,6 +20,9 @@
   var DEBUG_ENABLED_GLOBALLY = false;
   var DEBUG_ACCOUNT_IDS = define_process_env_DEBUG_ACCOUNT_IDS_default || [];
 
+  // src/shared/klaviyoInstance.js
+  var klaviyo = window.klaviyo || [];
+
   // src/guesty/generalUtils.js
   function getCurrentPageURL() {
     return window.location.pathname;
@@ -37,9 +40,8 @@
       return true;
     }
     try {
-      const klaviyo2 = window.klaviyo || [];
-      if (klaviyo2.account && typeof klaviyo2.account === "function") {
-        const accountId = klaviyo2.account();
+      if (klaviyo.account && typeof klaviyo.account === "function") {
+        const accountId = klaviyo.account();
         if (accountId && DEBUG_ACCOUNT_IDS.includes(accountId)) {
           return true;
         }
@@ -55,7 +57,6 @@
   }
 
   // src/guesty/klaviyoUtils.js
-  var klaviyo = window.klaviyo || [];
   var MONITORING_ACCOUNT = "UcwNrH";
   var MONITORING_PROFILE_ID = "guesty-onsite-monitoring";
   var checkoutTracked = false;
@@ -224,7 +225,6 @@
     const originalFetch = window.fetch;
     const originalXHROpen = XMLHttpRequest.prototype.open;
     const FIELDS = "_id+title+nickname+type+roomType+propertyType+accommodates+amenities+bathrooms+bedrooms+beds+bedType+timezone+defaultCheckInTime+defaultCheckOutTime+address+picture+pictures+prices+publicDescription+terms+taxes+reviews+tags+parentId++";
-    const klaviyo2 = window.klaviyo || [];
     window.fetch = async function(...args) {
       const response = await originalFetch(...args);
       const clonedResponse = response.clone();
@@ -256,7 +256,7 @@
             if (storedListingData) {
               debugLog("Using stored listing data from Viewed Listing event");
               setQuoteData(storedListingData, totalValue2, additionalFields2);
-              klaviyo2.isIdentified().then((res) => {
+              klaviyo.isIdentified().then((res) => {
                 if (res) {
                   trackStartedCheckoutOnce();
                 } else {
@@ -303,7 +303,7 @@
             if (storedListingData) {
               debugLog("Using stored listing data from Viewed Listing event (XHR)");
               setQuoteData(storedListingData, totalValue2, additionalFields2);
-              klaviyo2.isIdentified().then((res) => {
+              klaviyo.isIdentified().then((res) => {
                 if (res) {
                   trackStartedCheckoutOnce();
                 } else {
