@@ -1,4 +1,7 @@
 (() => {
+  // <define:process.env.DEBUG_ACCOUNT_IDS>
+  var define_process_env_DEBUG_ACCOUNT_IDS_default = [];
+
   // src/mews/constants.js
   var DEBUG = true;
   var KLAVIYO_EVENT_KEY_MAP = {
@@ -315,10 +318,7 @@
 
   // src/shared/debugConfig.js
   var DEBUG_ENABLED_GLOBALLY = false;
-  var DEBUG_ACCOUNT_IDS = [
-    // Example: 'ABC123',
-    // Example: 'XYZ789',
-  ];
+  var DEBUG_ACCOUNT_IDS = define_process_env_DEBUG_ACCOUNT_IDS_default || [];
 
   // src/shared/debugUtils.js
   function isDebugEnabled() {
