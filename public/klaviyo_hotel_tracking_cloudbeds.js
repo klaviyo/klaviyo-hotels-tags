@@ -3,7 +3,7 @@
   var define_process_env_DEBUG_ACCOUNT_IDS_default = [];
 
   // src/cloudbeds/constants.js
-  var DEBUG = true;
+  var DEBUG = false;
   var KLAVIYO_EVENT_KEY_MAP = {
     "view_item": "Viewed Listing",
     "add_to_cart": "Viewed Listing",

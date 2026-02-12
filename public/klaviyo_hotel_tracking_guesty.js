@@ -3,7 +3,7 @@
   var define_process_env_DEBUG_ACCOUNT_IDS_default = [];
 
   // src/guesty/constants.js
-  var DEBUG = true;
+  var DEBUG = false;
 
   // src/shared/validationUtils.js
   function isValidEmail(email) {
