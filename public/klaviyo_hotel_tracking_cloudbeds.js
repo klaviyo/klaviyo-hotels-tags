@@ -145,9 +145,14 @@
       debugLog("Error tracking Started Checkout:", err);
     });
   }
-  function attemptIdentify(source) {
+  function attemptIdentify(source, allowReIdentify = false) {
     if (source) {
       debugLog("attemptIdentify called from:", source);
+    }
+    if (allowReIdentify) {
+      debugLog("Re-identification allowed, proceeding");
+      performIdentification(source, true);
+      return;
     }
     if (klaviyo.isIdentified && typeof klaviyo.isIdentified === "function") {
       klaviyo.isIdentified().then(function(isIdentified) {
@@ -168,7 +173,7 @@
       performIdentification(source);
     }
   }
-  function performIdentification(source) {
+  function performIdentification(source, forceReIdentify = false) {
     const emailField = document.querySelector('input[name="email"]') || document.querySelector('[data-testid="guest-form-email-input"]') || document.querySelector('input[type="email"]');
     const phoneField = document.querySelector('input[name="phoneNumber"]') || document.querySelector('[data-testid="guest-form-phone-input"]') || document.querySelector('input[type="tel"][name="phoneNumber"]');
     debugLog("Email field found:", !!emailField);
@@ -185,7 +190,8 @@
     if (!hasValidPhone && phone) {
       debugLog("Phone invalid or incomplete:", phone);
     }
-    if ((hasValidEmail || hasValidPhone) && !identifyAttempted) {
+    const shouldIdentify = (hasValidEmail || hasValidPhone) && (!identifyAttempted || forceReIdentify);
+    if (shouldIdentify) {
       const identifyData = {};
       if (hasValidEmail) {
         identifyData["email"] = email;
@@ -202,12 +208,20 @@
         if (lastNameField && lastNameField.value.trim()) {
           identifyData["last_name"] = lastNameField.value.trim();
         }
-        debugLog("Identifying user with:", identifyData);
+        if (forceReIdentify) {
+          debugLog("Re-identifying user with:", identifyData);
+        } else {
+          debugLog("Identifying user with:", identifyData);
+        }
         klaviyo.identify(identifyData);
-        identifyAttempted = true;
-        debugLog("Identification complete - no further attempts will be made");
+        if (!forceReIdentify) {
+          identifyAttempted = true;
+          debugLog("Identification complete");
+        } else {
+          debugLog("Re-identification complete");
+        }
       }
-    } else if (identifyAttempted) {
+    } else if (identifyAttempted && !forceReIdentify) {
       debugLog("User already identified in this session, skipping");
     } else {
       debugLog("No valid email or phone found yet, will retry");
@@ -269,19 +283,30 @@
       debugLog("WARNING: Guest form not found, cannot attach listeners");
       return;
     }
-    const allInputs = guestForm.querySelectorAll("input, textarea, select");
-    debugLog("Found " + allInputs.length + " form fields to monitor");
-    for (let i = 0; i < allInputs.length; i++) {
-      (function(input) {
-        input.addEventListener("blur", function() {
-          debugLog("Form field blur:", input.name || input.type);
-          setTimeout(function() {
-            attemptIdentify("field blur: " + (input.name || input.type));
-          }, 500);
-        });
-      })(allInputs[i]);
+    const emailField = guestForm.querySelector('input[name="email"]') || guestForm.querySelector('[data-testid="guest-form-email-input"]') || guestForm.querySelector('input[type="email"]');
+    const phoneField = guestForm.querySelector('input[name="phoneNumber"]') || guestForm.querySelector('[data-testid="guest-form-phone-input"]') || guestForm.querySelector('input[type="tel"][name="phoneNumber"]');
+    if (emailField) {
+      emailField.addEventListener("blur", function() {
+        debugLog("Email field blur");
+        setTimeout(function() {
+          attemptIdentify("email blur");
+        }, 500);
+      });
+      debugLog("Blur listener attached to email field");
+    } else {
+      debugLog("WARNING: Email field not found");
     }
-    debugLog("Blur listeners attached to all form fields");
+    if (phoneField) {
+      phoneField.addEventListener("blur", function() {
+        debugLog("Phone field blur");
+        setTimeout(function() {
+          attemptIdentify("phone blur", true);
+        }, 500);
+      });
+      debugLog("Blur listener attached to phone field");
+    } else {
+      debugLog("WARNING: Phone field not found");
+    }
     guestForm.addEventListener("submit", function(e) {
       debugLog("Form submit detected - final identify attempt");
       attemptIdentify("form submit");
