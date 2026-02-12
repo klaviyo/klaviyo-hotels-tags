@@ -468,9 +468,9 @@
           const isEmailField = input.type === "email" || input.name === "email" || input.id === "email" || input.getAttribute("data-test-id") === "checkout-field-email" || input.getAttribute("autocomplete") === "email";
           const isPhoneField = input.type === "tel" || input.name === "phone" || input.name === "phoneNumber" || input.id === "phone" || input.getAttribute("data-test-id") === "checkout-field-phone" || input.getAttribute("autocomplete") === "tel";
           if (isEmailField) {
-            debugLog("Email field detected, attempting re-identification");
+            debugLog("Email field detected, attempting identification");
             setTimeout(function() {
-              attemptIdentify("email blur", true);
+              attemptIdentify("email blur");
             }, 500);
           } else if (isPhoneField) {
             debugLog("Phone field detected, attempting re-identification");
