@@ -283,30 +283,32 @@
       debugLog("WARNING: Guest form not found, cannot attach listeners");
       return;
     }
-    const emailField = guestForm.querySelector('input[name="email"]') || guestForm.querySelector('[data-testid="guest-form-email-input"]') || guestForm.querySelector('input[type="email"]');
-    const phoneField = guestForm.querySelector('input[name="phoneNumber"]') || guestForm.querySelector('[data-testid="guest-form-phone-input"]') || guestForm.querySelector('input[type="tel"][name="phoneNumber"]');
-    if (emailField) {
-      emailField.addEventListener("blur", function() {
-        debugLog("Email field blur");
-        setTimeout(function() {
-          attemptIdentify("email blur");
-        }, 500);
-      });
-      debugLog("Blur listener attached to email field");
-    } else {
-      debugLog("WARNING: Email field not found");
+    const allInputs = guestForm.querySelectorAll("input, textarea, select");
+    debugLog("Found " + allInputs.length + " form fields to monitor");
+    for (let i = 0; i < allInputs.length; i++) {
+      (function(input) {
+        input.addEventListener("blur", function() {
+          const fieldName = input.name || input.type;
+          debugLog("Form field blur:", fieldName);
+          const isEmailField = input.type === "email" || input.name === "email" || input.getAttribute("data-testid") === "guest-form-email-input";
+          const isPhoneField = input.type === "tel" && input.name === "phoneNumber" || input.name === "phoneNumber" || input.getAttribute("data-testid") === "guest-form-phone-input";
+          if (isEmailField) {
+            debugLog("Email field detected, attempting identification");
+            setTimeout(function() {
+              attemptIdentify("email blur");
+            }, 500);
+          } else if (isPhoneField) {
+            debugLog("Phone field detected, attempting re-identification");
+            setTimeout(function() {
+              attemptIdentify("phone blur", true);
+            }, 500);
+          } else {
+            debugLog("Ignoring blur on non-email/phone field:", fieldName);
+          }
+        });
+      })(allInputs[i]);
     }
-    if (phoneField) {
-      phoneField.addEventListener("blur", function() {
-        debugLog("Phone field blur");
-        setTimeout(function() {
-          attemptIdentify("phone blur", true);
-        }, 500);
-      });
-      debugLog("Blur listener attached to phone field");
-    } else {
-      debugLog("WARNING: Phone field not found");
-    }
+    debugLog("Blur listeners attached to all form fields");
     guestForm.addEventListener("submit", function(e) {
       debugLog("Form submit detected - final identify attempt");
       attemptIdentify("form submit");
