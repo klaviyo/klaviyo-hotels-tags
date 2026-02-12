@@ -12,7 +12,16 @@
   };
 
   // src/shared/klaviyoInstance.js
-  var klaviyo = window.klaviyo || [];
+  var klaviyo = new Proxy({}, {
+    get(target, prop) {
+      const kl = window.klaviyo || [];
+      return kl[prop];
+    },
+    has(target, prop) {
+      const kl = window.klaviyo || [];
+      return prop in kl;
+    }
+  });
 
   // src/cloudbeds/klaviyoUtils.js
   var identifyAttempted = false;
