@@ -17,11 +17,17 @@ This Google Tag Manager template enables seamless tracking of hotel booking even
 ### Cloudbeds
 Tracks events from Cloudbeds booking engine via GTM dataLayer events.
 
+**📖 [View Cloudbeds Setup Guide](https://help.klaviyo.com/hc/en-us/articles/39406849361691)**
+
 ### Mews
 Tracks events from Mews Distributor (booking engine) via GTM dataLayer events.
 
+**📖 [View Mews Setup Guide](https://help.klaviyo.com/hc/en-us/articles/38311148860955)**
+
 ### Guesty
 Tracks events directly from Guesty booking via GTM and direct DOM elements.
+
+**📖 [View Guesty Setup Guide](https://help.klaviyo.com/hc/en-us/articles/37673288455323)**
 
 ## 🎯 Events Tracked
 
