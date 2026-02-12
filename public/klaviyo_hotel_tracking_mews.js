@@ -3,7 +3,7 @@
   var define_process_env_DEBUG_ACCOUNT_IDS_default = [];
 
   // src/mews/constants.js
-  var DEBUG = true;
+  var DEBUG = false;
   var KLAVIYO_EVENT_KEY_MAP = {
     "distributorRoomAdded": "Viewed Listing",
     // Has all data including dates
