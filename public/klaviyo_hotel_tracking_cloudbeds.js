@@ -235,8 +235,10 @@
     return emailRegex.test(email);
   }
   function isValidPhone(phone) {
+    if (!phone) return false;
+    const cleanPhone = phone.replace(/[\s\(\)\-\.]/g, "");
     const phoneRegex = /^\+?[0-9]{10,15}$/;
-    return phoneRegex.test(phone);
+    return phoneRegex.test(cleanPhone);
   }
 
   // src/shared/debugConfig.js
