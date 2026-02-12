@@ -221,9 +221,14 @@
       debugLog("Error tracking Started Checkout:", err);
     });
   }
-  function attemptIdentify(source) {
+  function attemptIdentify(source, allowReIdentify = false) {
     if (source) {
       debugLog("attemptIdentify called from:", source);
+    }
+    if (allowReIdentify) {
+      debugLog("Re-identification allowed, proceeding");
+      performIdentification(source, true);
+      return;
     }
     if (klaviyo.isIdentified && typeof klaviyo.isIdentified === "function") {
       klaviyo.isIdentified().then(function(isIdentified) {
@@ -244,7 +249,7 @@
       performIdentification(source);
     }
   }
-  function performIdentification(source) {
+  function performIdentification(source, forceReIdentify = false) {
     const iframe = document.querySelector("iframe.mews-distributor") || document.querySelector('iframe[name*="mews-distributor"]');
     let searchDoc = document;
     if (iframe) {
@@ -287,7 +292,8 @@
     if (!hasValidPhone && phone) {
       debugLog("Phone invalid or incomplete:", phone);
     }
-    if ((hasValidEmail || hasValidPhone) && !identifyAttempted) {
+    const shouldIdentify = (hasValidEmail || hasValidPhone) && (!identifyAttempted || forceReIdentify);
+    if (shouldIdentify) {
       const identifyData = {};
       if (hasValidEmail) {
         identifyData["email"] = email;
@@ -304,12 +310,20 @@
         if (lastNameField && lastNameField.value.trim()) {
           identifyData["last_name"] = lastNameField.value.trim();
         }
-        debugLog("Identifying user with:", identifyData);
+        if (forceReIdentify) {
+          debugLog("Re-identifying user with:", identifyData);
+        } else {
+          debugLog("Identifying user with:", identifyData);
+        }
         klaviyo.identify(identifyData);
-        identifyAttempted = true;
-        debugLog("Identification complete - no further attempts will be made");
+        if (!forceReIdentify) {
+          identifyAttempted = true;
+          debugLog("Identification complete");
+        } else {
+          debugLog("Re-identification complete");
+        }
       }
-    } else if (identifyAttempted) {
+    } else if (identifyAttempted && !forceReIdentify) {
       debugLog("User already identified in this session, skipping");
     } else {
       debugLog("No valid email or phone found yet, will retry");
@@ -447,16 +461,34 @@
     for (let i = 0; i < allInputs.length; i++) {
       (function(input) {
         input.addEventListener("blur", function() {
-          debugLog("Form field blur:", input.name || input.type);
-          setTimeout(function() {
-            attemptIdentify("field blur: " + (input.name || input.type));
-          }, 500);
+          const fieldName = input.name || input.type;
+          debugLog("Form field blur:", fieldName);
+          const isEmailField = input.type === "email" || input.name === "email" || input.id === "email" || input.getAttribute("data-test-id") === "checkout-field-email" || input.getAttribute("autocomplete") === "email";
+          const isPhoneField = input.type === "tel" || input.name === "phone" || input.name === "phoneNumber" || input.id === "phone" || input.getAttribute("data-test-id") === "checkout-field-phone" || input.getAttribute("autocomplete") === "tel";
+          if (isEmailField) {
+            debugLog("Email field detected, attempting re-identification");
+            setTimeout(function() {
+              attemptIdentify("email blur", true);
+            }, 500);
+          } else if (isPhoneField) {
+            debugLog("Phone field detected, attempting re-identification");
+            setTimeout(function() {
+              attemptIdentify("phone blur", true);
+            }, 500);
+          } else {
+            debugLog("Ignoring blur on non-email/phone field:", fieldName);
+          }
         });
         input.addEventListener("change", function() {
-          debugLog("Form field changed:", input.name || input.type);
-          setTimeout(function() {
-            attemptIdentify("field change: " + (input.name || input.type));
-          }, 500);
+          const fieldName = input.name || input.type;
+          const isEmailField = input.type === "email" || input.name === "email" || input.id === "email" || input.getAttribute("data-test-id") === "checkout-field-email" || input.getAttribute("autocomplete") === "email";
+          const isPhoneField = input.type === "tel" || input.name === "phone" || input.name === "phoneNumber" || input.id === "phone" || input.getAttribute("data-test-id") === "checkout-field-phone" || input.getAttribute("autocomplete") === "tel";
+          if (isEmailField || isPhoneField) {
+            debugLog("Form field changed:", fieldName);
+            setTimeout(function() {
+              attemptIdentify("field change: " + fieldName, true);
+            }, 500);
+          }
         });
       })(allInputs[i]);
     }
