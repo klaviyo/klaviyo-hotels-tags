@@ -1,5 +1,40 @@
-homepage: "https://www.klaviyo.com"
-documentation: "https://github.com/klaviyo/klaviyo-hotels-tags/blob/master/README.md"
-versions:
-  - sha: 15f688ac781b86b843cf3322fd62092c568aab34
-    changeNotes: Initial release.
+  homepage: "https://www.klaviyo.com"
+  documentation: "https://github.com/klaviyo/klaviyo-hotels-tags/blob/master/README.md"
+  versions:
+    # Latest version
+    - sha: eb08bfcd48c341bd16f7f8eecc1079b746b44c29
+      changeNotes: |
+        Phone Re-identification & Validation Improvements
+        - Phone re-identification: Automatically adds phone numbers to existing identified profiles
+        - Formatted phone support: Accepts (123) 456-7890, 123-456-7890, and other formats
+        - Fixed debug logging to respect DEBUG constant
+        - Account-based debug logging via DEBUG_ACCOUNT_IDS
+
+    # Single Klaviyo instance refactor
+    - sha: f121030980d735cba7a9cc6b6df60bbf75879b29
+      changeNotes: |
+        Major Refactor: Single Klaviyo Instance
+        - Fixed "klaviyo is not defined" errors with dynamic Proxy implementation
+        - Consolidated klaviyo references across all integrations
+        - Updated template branding and GitHub Pages URLs
+        - Improved reliability and performance
+
+    # Multi-platform validation improvements
+    - sha: 407803f81d4772b64b54ba6e2fc200bf5718fb8d
+      changeNotes: |
+        Enhanced Validation & Shared Utilities
+        - Improved email and phone validation
+        - Created shared validation utilities across platforms
+        - Account-based debug logging support
+
+    # Multi-platform support
+    - sha: fe7743988bc319b2a1559e57b1f85838f8cd1233
+      changeNotes: |
+        Guesty Integration Added
+        - Added support for Guesty booking engine
+        - Improved price tracking across all platforms
+        - Now supports Cloudbeds, Mews, and Guesty
+
+    # Initial release
+    - sha: c6d7730e127d215e36077a1c948eef954143578e
+      changeNotes: Initial release with Cloudbeds support.
