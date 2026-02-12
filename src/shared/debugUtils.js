@@ -26,11 +26,12 @@ function isDebugEnabled() {
 }
 
 // Creates a debug logger function with a specific prefix
-// The enabled parameter is kept for backward compatibility but is now checked dynamically
+// The enabled parameter controls whether to log at all
 export function createDebugLogger(prefix, legacyEnabled = true) {
     return function debugLog(...args) {
-        // Check both legacy flag and dynamic account-based debugging
-        if (legacyEnabled && isDebugEnabled()) {
+        // If legacy flag is true, always log
+        // Otherwise check account-based debugging
+        if (legacyEnabled || isDebugEnabled()) {
             console.log(prefix, ...args);
         }
     };
