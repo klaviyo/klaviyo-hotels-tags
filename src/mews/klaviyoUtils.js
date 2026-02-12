@@ -267,10 +267,17 @@ export function trackStartedCheckout(items, ecommerceData) {
     });
 }
 // User identification functions
-export function attemptIdentify(source) {
+export function attemptIdentify(source, allowReIdentify = false) {
 
     if (source) {
         debugLog('attemptIdentify called from:', source);
+    }
+
+    // If allowReIdentify is true (email/phone blur), skip the isIdentified check
+    if (allowReIdentify) {
+        debugLog('Re-identification allowed, proceeding');
+        performIdentification(source, true);
+        return;
     }
 
     // Check if user is already identified
@@ -297,7 +304,7 @@ export function attemptIdentify(source) {
     }
 }
 
-export function performIdentification(source) {
+export function performIdentification(source, forceReIdentify = false) {
 
     // Find the Mews iframe and get its document
     const iframe = document.querySelector('iframe.mews-distributor') ||
@@ -356,8 +363,10 @@ export function performIdentification(source) {
         debugLog('Phone invalid or incomplete:', phone);
     }
 
-    // Only identify if we have valid email or phone
-    if ((hasValidEmail || hasValidPhone) && !identifyAttempted) {
+    // Check if we should proceed with identification
+    const shouldIdentify = (hasValidEmail || hasValidPhone) && (!identifyAttempted || forceReIdentify);
+
+    if (shouldIdentify) {
         const identifyData = {};
 
         if (hasValidEmail) {
@@ -387,14 +396,23 @@ export function performIdentification(source) {
                 identifyData['last_name'] = lastNameField.value.trim();
             }
 
-            debugLog('Identifying user with:', identifyData);
+            if (forceReIdentify) {
+                debugLog('Re-identifying user with:', identifyData);
+            } else {
+                debugLog('Identifying user with:', identifyData);
+            }
+
             klaviyo.identify(identifyData);
 
-            // Mark as attempted - never try again
-            identifyAttempted = true;
-            debugLog('Identification complete - no further attempts will be made');
+            // Mark as attempted (unless this is a re-identify for email/phone only)
+            if (!forceReIdentify) {
+                identifyAttempted = true;
+                debugLog('Identification complete');
+            } else {
+                debugLog('Re-identification complete');
+            }
         }
-    } else if (identifyAttempted) {
+    } else if (identifyAttempted && !forceReIdentify) {
         debugLog('User already identified in this session, skipping');
     } else {
         debugLog('No valid email or phone found yet, will retry');
