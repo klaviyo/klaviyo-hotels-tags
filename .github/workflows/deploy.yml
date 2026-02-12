@@ -35,6 +35,11 @@ jobs:
           echo "MONITORING_PROFILE_ID=${{ secrets.MONITORING_PROFILE_ID }}" >> .env
           echo "DEBUG_ACCOUNT_IDS=${{ secrets.DEBUG_ACCOUNT_IDS }}" >> .env
 
+      - name: Debug - Check .env file
+        run: |
+          echo "DEBUG_ACCOUNT_IDS value in .env:"
+          grep DEBUG_ACCOUNT_IDS .env || echo "Not found"
+
       - name: Build all integrations
         run: npm run build
 
