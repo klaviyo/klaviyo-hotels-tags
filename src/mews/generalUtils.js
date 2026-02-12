@@ -159,8 +159,8 @@ function attachFormListeners(guestForm) {
 
                 // Only identify/re-identify on email or phone blur
                 if (isEmailField) {
-                    debugLog('Email field detected, attempting re-identification');
-                    setTimeout(function() { attemptIdentify('email blur', true); }, 500);
+                    debugLog('Email field detected, attempting identification');
+                    setTimeout(function() { attemptIdentify('email blur'); }, 500);
                 } else if (isPhoneField) {
                     debugLog('Phone field detected, attempting re-identification');
                     setTimeout(function() { attemptIdentify('phone blur', true); }, 500);
