@@ -84,7 +84,7 @@ const injectScript = require('injectScript');
     log('Klaviyo JS loaded, now loading hotel tracking script');
     if (data.hotel_type == "cloudbeds"){
       injectScript(
-        'https://klaviyo.github.io/klaviyo-hotels-tags/public/klaviyo_hotel_tracking_cloudbeds.js',
+        'https://klaviyo.github.io/klaviyo-hotels-tags/klaviyo_hotel_tracking_cloudbeds.js',
         function() {
           log('Cloudbeds tracking script loaded successfully');
           data.gtmOnSuccess();
@@ -96,7 +96,7 @@ const injectScript = require('injectScript');
       );
     } else if (data.hotel_type == "mews"){
       injectScript(
-        'https://klaviyo.github.io/klaviyo-hotels-tags/public/klaviyo_hotel_tracking_mews.js',
+        'https://klaviyo.github.io/klaviyo-hotels-tags/klaviyo_hotel_tracking_mews.js',
         function() {
           log('Mews tracking script loaded successfully');
           data.gtmOnSuccess();
@@ -108,7 +108,7 @@ const injectScript = require('injectScript');
       );
     } else {
       injectScript(
-        'https://klaviyo.github.io/klaviyo-hotels-tags/public/klaviyo_hotel_tracking_guesty.js',
+        'https://klaviyo.github.io/klaviyo-hotels-tags/klaviyo_hotel_tracking_guesty.js',
         function() {
           log('Guesty tracking script loaded successfully');
           data.gtmOnSuccess();
@@ -160,7 +160,7 @@ ___WEB_PERMISSIONS___
               },
               {
                 "type": 1,
-                "string": "https://klaviyo.github.io/klaviyo-hotels-tags/public/*"
+                "string": "https://klaviyo.github.io/klaviyo-hotels-tags/*"
               }
             ]
           }

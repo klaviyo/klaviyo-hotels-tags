@@ -2,6 +2,12 @@
   documentation: "https://github.com/klaviyo/klaviyo-hotels-tags/blob/master/README.md"
   versions:
     # Latest version
+    - sha: 8317756c10b76abc545fb9f46ecd950bca7dd053
+      changeNotes: |
+        Fix GitHub Pages URLs
+        - Removed /public/ from script URLs that were causing 404 errors
+
+    # Phone re-identification
     - sha: eb08bfcd48c341bd16f7f8eecc1079b746b44c29
       changeNotes: |
         Phone Re-identification & Validation Improvements
