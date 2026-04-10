@@ -2,10 +2,10 @@
 # This file defines who should review changes to specific paths
 
 # Global owner for all files
-* @cbarley10
+* @klaviyo/integrations-advertising-expansion
 
 # Shared utilities require review
-/src/shared/ @cbarley10
+/src/shared/ @klaviyo/integrations-advertising-expansion
 
 # Production deployment workflow requires review
-/.github/workflows/ @cbarley10
+/.github/workflows/ @klaviyo/integrations-advertising-expansion
