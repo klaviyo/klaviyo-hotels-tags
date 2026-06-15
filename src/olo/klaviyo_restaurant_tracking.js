@@ -5,7 +5,7 @@
 
 import { debugLog } from './generalUtils.js';
 import { OLO_EVENTS } from './constants.js';
-import { trackViewedProduct, trackAddedToCart, trackStartedCheckout } from './klaviyoUtils.js';
+import { trackViewedProduct, trackAddedToCart, trackStartedCheckout, startIdentifyMonitoring } from './klaviyoUtils.js';
 
 // Injected after klaviyo.js, so window.Olo is usually ready; poll for a race.
 const POLL_INTERVAL_MS = 200;
@@ -67,6 +67,9 @@ function subscribe() {
             waited += POLL_INTERVAL_MS;
         }, POLL_INTERVAL_MS);
     }
+
+    // Identify guests from the /checkout/auth form (independent of the bus).
+    startIdentifyMonitoring();
 
     debugLog('Setup complete');
 })();

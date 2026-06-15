@@ -13,6 +13,7 @@ import {
     ADDED_TO_CART,
     STARTED_CHECKOUT,
 } from '../shared/restaurant/eventNames.js';
+import { isValidEmail, isValidPhone } from '../shared/validationUtils.js';
 
 // Olo's addToCart/basket/checkout payloads carry only a minimal product ({ id })
 // with no images. Cache images from the richer view/click products, persisted to
@@ -159,4 +160,64 @@ export function trackStartedCheckout(basket) {
     }).catch((err) => {
         debugLog('Error tracking Started Checkout:', err);
     });
+}
+
+// Guest identification from Olo's /checkout/auth form. Olo collects name/email/
+// phone there but doesn't expose them on window.Olo.data.user, so we read the
+// inputs directly. Selectors confirmed against Olo Serve's Ember form; the
+// ember*-input ids are dynamic, so we key off name/autocomplete/type.
+function findField(selectors) {
+    for (let i = 0; i < selectors.length; i++) {
+        const el = document.querySelector(selectors[i]);
+        if (el) return el;
+    }
+    return null;
+}
+const findEmailField = () => findField(['input[name="emailAddress"]', 'input[autocomplete="email"]', 'input[type="email"]']);
+const findPhoneField = () => findField(['input[autocomplete="tel"]', 'input[name="phoneNumber"]', 'input[type="tel"]']);
+const findFirstNameField = () => findField(['input[name="firstName"]', 'input[autocomplete="given-name"]']);
+const findLastNameField = () => findField(['input[name="lastName"]', 'input[autocomplete="family-name"]']);
+const fieldValue = (el) => (el && el.value ? el.value.trim() : '');
+
+let lastIdentifyKey = '';
+
+export function attemptIdentify(source) {
+    const email = fieldValue(findEmailField());
+    const phone = fieldValue(findPhoneField());
+    const first = fieldValue(findFirstNameField());
+    const last = fieldValue(findLastNameField());
+    const hasEmail = email && isValidEmail(email);
+    const hasPhone = phone && isValidPhone(phone);
+
+    // Olo's auth form requires name + contact, so wait for the full set and send
+    // one complete identify rather than partial ones as fields are filled.
+    if ((!hasEmail && !hasPhone) || !first || !last) return;
+
+    const props = { first_name: first, last_name: last };
+    if (hasEmail) props.email = email;
+    if (hasPhone) props.phone_number = phone;
+
+    const key = JSON.stringify(props);
+    if (key === lastIdentifyKey) return; // don't re-send an identical identify
+
+    debugLog('Identifying guest (' + source + '):', props);
+    try {
+        klaviyo.identify(props);
+        lastIdentifyKey = key; // only mark sent after identify didn't throw, so a failure can retry
+    } catch (err) {
+        debugLog('Error identifying:', err);
+    }
+}
+
+// Identify on submit / continue-click — the moment all required fields (incl.
+// first/last name) are filled. Document-level capture catches it regardless of
+// when Olo's SPA mounts the form, and before it navigates away.
+export function startIdentifyMonitoring() {
+    const onAction = () => {
+        if (window.location.pathname.indexOf('/checkout') !== -1) {
+            attemptIdentify('checkout action');
+        }
+    };
+    document.addEventListener('submit', onAction, true);
+    document.addEventListener('click', onAction, true);
 }
