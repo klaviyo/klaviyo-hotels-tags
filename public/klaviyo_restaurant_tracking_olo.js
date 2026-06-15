@@ -377,10 +377,10 @@
     if (hasPhone) props.phone_number = phone;
     const key = JSON.stringify(props);
     if (key === lastIdentifyKey) return;
-    lastIdentifyKey = key;
     debugLog("Identifying guest (" + source + "):", props);
     try {
       klaviyo.identify(props);
+      lastIdentifyKey = key;
     } catch (err) {
       debugLog("Error identifying:", err);
     }

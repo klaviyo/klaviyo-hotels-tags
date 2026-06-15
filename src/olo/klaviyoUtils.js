@@ -199,11 +199,11 @@ export function attemptIdentify(source) {
 
     const key = JSON.stringify(props);
     if (key === lastIdentifyKey) return; // don't re-send an identical identify
-    lastIdentifyKey = key;
 
     debugLog('Identifying guest (' + source + '):', props);
     try {
         klaviyo.identify(props);
+        lastIdentifyKey = key; // only mark sent after identify didn't throw, so a failure can retry
     } catch (err) {
         debugLog('Error identifying:', err);
     }
