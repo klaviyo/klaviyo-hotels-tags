@@ -39,8 +39,8 @@ const buildConfigs = {
     surgeDomain: 'klaviyo-hotel-guesty.surge.sh'
   },
   olo: {
-    entryPoint: 'src/olo/klaviyo_hotel_tracking.js',
-    outfile: 'public/klaviyo_hotel_tracking_olo.js',
+    entryPoint: 'src/olo/klaviyo_restaurant_tracking.js',
+    outfile: 'public/klaviyo_restaurant_tracking_olo.js',
     surgeDomain: 'klaviyo-hotel-olo.surge.sh'
   }
 };

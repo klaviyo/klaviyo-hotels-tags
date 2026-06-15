@@ -324,7 +324,7 @@
     });
   }
 
-  // src/olo/klaviyo_hotel_tracking.js
+  // src/olo/klaviyo_restaurant_tracking.js
   var POLL_INTERVAL_MS = 200;
   var MAX_WAIT_MS = 15e3;
   function isBusReady() {
