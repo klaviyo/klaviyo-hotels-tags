@@ -13,7 +13,7 @@ ___INFO___
   "id": "cvt_temp_public_id",
   "version": 2,
   "securityGroups": [],
-  "displayName": "Klaviyo Onsite Tracking",
+  "displayName": "Klaviyo Hotels and Restaurants Tracking",
   "categories": ["EMAIL_MARKETING", "ANALYTICS", "MARKETING"],
   "brand": {
     "id": "klaviyo",

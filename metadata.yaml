@@ -1,16 +1,6 @@
   homepage: "https://www.klaviyo.com"
   documentation: "https://github.com/klaviyo/klaviyo-hotels-tags/blob/master/README.md"
   versions:
-    # Olo restaurant ordering support
-    # NOTE: set this sha to the squash/merge commit on master before publishing to the GTM gallery
-    - sha: REPLACE_WITH_MERGE_COMMIT_SHA
-      changeNotes: |
-        Restaurant Ordering Support (Olo)
-        - Added Olo (Olo Serve) tracking: Viewed Product, Added to Cart, Started Checkout
-        - Guest identification from the Olo checkout form (name, email, phone)
-        - Generalized the tag name + platform selector to cover hotels and restaurants
-        - No change to existing Cloudbeds / Mews / Guesty installs
-
     # Latest version
     - sha: b68ccd4d101de521dbb51d0a4475f339192b158d
       changeNotes: |
