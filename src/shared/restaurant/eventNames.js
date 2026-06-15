@@ -1,6 +1,5 @@
-// Normalized Klaviyo event names for restaurant (F&B) integrations.
-// Shared across Toast and Olo so both platforms report identically
-// (cross-platform parity is an explicit project success metric).
+// Normalized Klaviyo event names shared by the restaurant (F&B) integrations
+// (Toast, Olo) so both report identically.
 
 export const VIEWED_PRODUCT = "Viewed Product";
 export const ADDED_TO_CART = "Added to Cart";

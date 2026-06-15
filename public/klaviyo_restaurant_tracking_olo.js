@@ -6,9 +6,13 @@
   var DEBUG = false;
   var OLO_EVENTS = {
     VIEW_PRODUCT_DETAIL: "v1.viewProductDetail",
+    // (product, viewIn)
     CLICK_PRODUCT_LINK: "v1.clickProductLink",
+    // (product, clickFrom)
     ADD_TO_CART: "v1.addToCart",
+    // (basketProduct)
     CHECKOUT: "v1.checkout"
+    // (basket, doneCallback)
   };
   var FULFILLMENT_TYPE_MAP = {
     counterpickup: "Pickup",
@@ -231,7 +235,6 @@
       imageURL: pickImageURL(p.images),
       url: currentURL(),
       modifiers: []
-      // product views carry no chosen modifiers
     };
   }
   function mapBasketProductToItem(basketProduct) {
@@ -257,7 +260,6 @@
       quantity: bp.quantity,
       itemPrice: bp.unitCost,
       productURL: currentURL(),
-      // Olo has no per-product URL on checkout
       imageURL: pickImageURL(product.images) || imageForProductId(product.id),
       productCategories: bp.categoryName ? [bp.categoryName] : [],
       modifiers: parseModifiers(bp.customizeDescription)
@@ -268,7 +270,6 @@
     const products = Array.isArray(b.basketProducts) ? b.basketProducts : [];
     return {
       value: b.subTotal,
-      // pre-tax total (builder falls back to summing rows)
       brand: getBrandFromHostname(),
       fulfillmentType: mapFulfillmentType(b.handoffMode),
       checkoutURL: currentURL(),
@@ -365,7 +366,6 @@
       const timer = setInterval(function() {
         if (isBusReady()) {
           clearInterval(timer);
-          debugLog("window.Olo ready after " + waited + "ms");
           subscribe();
         } else if (waited >= MAX_WAIT_MS) {
           clearInterval(timer);

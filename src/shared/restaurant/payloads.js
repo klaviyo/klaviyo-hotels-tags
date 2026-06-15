@@ -1,36 +1,25 @@
-// Normalized F&B payload builders (VEX-353).
+// Shared F&B payload builders. Platform adapters (Toast, Olo) map raw events
+// into the neutral inputs below; these produce the normalized Klaviyo schema so
+// both platforms emit identical events. Missing fields degrade to "" / [] / 0 —
+// builders never return undefined or throw.
 //
-// Platform adapters (Toast, Olo) map their raw event data into the
-// platform-neutral input shapes below; these builders then produce the exact
-// Klaviyo property schema so both platforms emit identical events.
-//
-// Neutral item input (Viewed Product / Added to Cart):
-//   { productName, productId, brand, price, categories, imageURL, url, modifiers }
-// Neutral cart input (Started Checkout):
-//   { value, brand, fulfillmentType, checkoutURL, categories, items: [
-//       { productId, productName, quantity, itemPrice, productURL, imageURL,
-//         productCategories, modifiers } ] }
-//
-// All fields are optional: missing values degrade to empty string / empty array
-// / 0 — builders never return `undefined` for a key and never throw.
+// Item input: { productName, productId, brand, price, categories, imageURL, url, modifiers }
+// Cart input: { value, brand, fulfillmentType, checkoutURL, categories, items: [
+//             { productId, productName, quantity, itemPrice, productURL, imageURL,
+//               productCategories, modifiers } ] }
 
-// ---- type coercion helpers --------------------------------------------------
-
-// Coerce to a finite number, else fall back (default 0). Accepts numeric
-// strings like "13.06"; rejects NaN/Infinity/null/undefined.
+// Finite number, else fallback; accepts numeric strings like "13.06".
 export function toNumber(value, fallback = 0) {
     const n = typeof value === "string" ? parseFloat(value) : value;
     return typeof n === "number" && isFinite(n) ? n : fallback;
 }
 
-// Coerce to a string, else fall back (default ""). Guards null/undefined.
 export function toStringSafe(value, fallback = "") {
     if (value === null || value === undefined) return fallback;
     return typeof value === "string" ? value : String(value);
 }
 
-// Coerce to a clean array of non-empty strings. Accepts an array or a single
-// value; filters out empties so e.g. Categories never contains "".
+// Array of non-empty strings; accepts an array or a single value.
 export function toArray(value) {
     if (value === null || value === undefined) return [];
     const arr = Array.isArray(value) ? value : [value];
@@ -39,16 +28,11 @@ export function toArray(value) {
         .map((v) => (typeof v === "string" ? v : String(v)));
 }
 
-// Round to 2 decimals to avoid float noise in monetary values.
 function money(value) {
     return Math.round(toNumber(value) * 100) / 100;
 }
 
-// ---- item-level builders ----------------------------------------------------
-
-// Build the shared item-level payload used by both Viewed Product and Added to
-// Cart. Item-level props per spec: ProductName, ProductID, Brand, Price
-// (numeric, pre-tax), Categories (array), ImageURL, URL, Modifiers (array).
+// Shared item payload for Viewed Product and Added to Cart.
 function buildItemPayload(item) {
     const it = item || {};
     return {
@@ -71,10 +55,7 @@ export function buildAddedToCartPayload(item) {
     return buildItemPayload(item);
 }
 
-// ---- checkout builder -------------------------------------------------------
-
-// Build one normalized line item for the Started Checkout Items[] array.
-// RowTotal = ItemPrice × Quantity (spec).
+// One checkout line item; RowTotal = ItemPrice × Quantity.
 function buildLineItem(lineItem) {
     const li = lineItem || {};
     const itemPrice = money(li.itemPrice);
@@ -92,21 +73,16 @@ function buildLineItem(lineItem) {
     };
 }
 
-// Build the Started Checkout payload. Checkout props per spec: $value,
-// ItemNames (array), CheckoutURL, Categories (array), FulfillmentType
-// ("Delivery" | "Pickup"), Brand, and Items[] line items.
 export function buildStartedCheckoutPayload(cart) {
     const c = cart || {};
     const lineItems = Array.isArray(c.items) ? c.items.map(buildLineItem) : [];
 
-    // $value: prefer a platform-provided pre-tax total; otherwise sum the line
-    // items' RowTotals so $value always totals all line items.
+    // Prefer a platform-provided pre-tax total; else sum the line items.
     const providedValue = toNumber(c.value, NaN);
     const summedValue = lineItems.reduce((sum, li) => sum + li.RowTotal, 0);
     const value = isFinite(providedValue) ? money(providedValue) : money(summedValue);
 
-    // Categories: explicit cart-level categories, else the union of all line
-    // items' categories (deduped, order preserved).
+    // Explicit cart categories, else the union across line items.
     const categories = c.categories
         ? toArray(c.categories)
         : dedupe(lineItems.reduce((acc, li) => acc.concat(li.ProductCategories), []));

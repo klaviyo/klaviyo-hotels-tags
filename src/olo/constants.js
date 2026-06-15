@@ -1,27 +1,19 @@
-// Constants for Klaviyo Olo Serve tracking (VEX-355).
+// Constants for Olo Serve tracking.
 
-// Enable debug logging (legacy global flag; account-based debug also applies)
 export const DEBUG = false;
 
-// Olo Serve "global events" we subscribe to via window.Olo.on, mapped to the
-// normalized Klaviyo F&B events. Event signatures (from Olo's own GTM template):
-//   v1.viewProductDetail (product, viewIn)
-//   v1.clickProductLink  (product, clickFrom)
-//   v1.addToCart         (basketProduct)
-//   v1.checkout          (basket, doneCallback)
-// Viewed Product listens to BOTH viewProductDetail and clickProductLink: which
-// one a site emits varies by Serve feature flags (observed live: some sites fire
-// only clickProductLink). trackViewedProduct de-dupes if both fire.
+// Olo Serve "global events" (window.Olo.on) -> normalized Klaviyo events.
+// Viewed Product listens to both clickProductLink and viewProductDetail because
+// which one a site emits varies by Serve feature flags; trackViewedProduct
+// de-dupes if both fire.
 export const OLO_EVENTS = {
-    VIEW_PRODUCT_DETAIL: "v1.viewProductDetail",
-    CLICK_PRODUCT_LINK: "v1.clickProductLink",
-    ADD_TO_CART: "v1.addToCart",
-    CHECKOUT: "v1.checkout",
+    VIEW_PRODUCT_DETAIL: "v1.viewProductDetail", // (product, viewIn)
+    CLICK_PRODUCT_LINK: "v1.clickProductLink",   // (product, clickFrom)
+    ADD_TO_CART: "v1.addToCart",                 // (basketProduct)
+    CHECKOUT: "v1.checkout",                     // (basket, doneCallback)
 };
 
-// Olo basket.handoffMode -> normalized FulfillmentType ("Pickup" | "Delivery").
-// Olo uses handoff modes like CounterPickup / CurbsidePickup / DriveThru for
-// pickup and Dispatch / Delivery for delivery.
+// handoffMode -> FulfillmentType.
 export const FULFILLMENT_TYPE_MAP = {
     counterpickup: "Pickup",
     curbsidepickup: "Pickup",
@@ -33,5 +25,5 @@ export const FULFILLMENT_TYPE_MAP = {
     delivery: "Delivery",
 };
 
-// Olo product image groupName we prefer for ImageURL (the menu thumbnail).
+// Preferred product image group for ImageURL (the menu thumbnail).
 export const PREFERRED_IMAGE_GROUP = "mobile-webapp-menu";
