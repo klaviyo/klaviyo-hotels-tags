@@ -214,6 +214,19 @@
   var ADDED_TO_CART = "Added to Cart";
   var STARTED_CHECKOUT = "Started Checkout";
 
+  // src/shared/validationUtils.js
+  function isValidEmail(email) {
+    if (!email || email.length < 5) return false;
+    const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  }
+  function isValidPhone(phone) {
+    if (!phone) return false;
+    const cleanPhone = phone.replace(/[\s\(\)\-\.]/g, "");
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    return phoneRegex.test(cleanPhone);
+  }
+
   // src/olo/klaviyoUtils.js
   var IMAGE_CACHE_KEY = "klOloImageById";
   function loadImageCache() {
@@ -338,6 +351,49 @@
       debugLog("Error tracking Started Checkout:", err);
     });
   }
+  function findField(selectors) {
+    for (let i = 0; i < selectors.length; i++) {
+      const el = document.querySelector(selectors[i]);
+      if (el) return el;
+    }
+    return null;
+  }
+  var findEmailField = () => findField(['input[name="emailAddress"]', 'input[autocomplete="email"]', 'input[type="email"]']);
+  var findPhoneField = () => findField(['input[autocomplete="tel"]', 'input[name="phoneNumber"]', 'input[type="tel"]']);
+  var findFirstNameField = () => findField(['input[name="firstName"]', 'input[autocomplete="given-name"]']);
+  var findLastNameField = () => findField(['input[name="lastName"]', 'input[autocomplete="family-name"]']);
+  var fieldValue = (el) => el && el.value ? el.value.trim() : "";
+  var lastIdentifyKey = "";
+  function attemptIdentify(source) {
+    const email = fieldValue(findEmailField());
+    const phone = fieldValue(findPhoneField());
+    const first = fieldValue(findFirstNameField());
+    const last = fieldValue(findLastNameField());
+    const hasEmail = email && isValidEmail(email);
+    const hasPhone = phone && isValidPhone(phone);
+    if (!hasEmail && !hasPhone || !first || !last) return;
+    const props = { first_name: first, last_name: last };
+    if (hasEmail) props.email = email;
+    if (hasPhone) props.phone_number = phone;
+    const key = JSON.stringify(props);
+    if (key === lastIdentifyKey) return;
+    lastIdentifyKey = key;
+    debugLog("Identifying guest (" + source + "):", props);
+    try {
+      klaviyo.identify(props);
+    } catch (err) {
+      debugLog("Error identifying:", err);
+    }
+  }
+  function startIdentifyMonitoring() {
+    const onAction = () => {
+      if (window.location.pathname.indexOf("/checkout") !== -1) {
+        attemptIdentify("checkout action");
+      }
+    };
+    document.addEventListener("submit", onAction, true);
+    document.addEventListener("click", onAction, true);
+  }
 
   // src/olo/klaviyo_restaurant_tracking.js
   var POLL_INTERVAL_MS = 200;
@@ -388,6 +444,7 @@
         waited += POLL_INTERVAL_MS;
       }, POLL_INTERVAL_MS);
     }
+    startIdentifyMonitoring();
     debugLog("Setup complete");
   })();
 })();
