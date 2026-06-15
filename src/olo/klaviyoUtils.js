@@ -14,14 +14,31 @@ import {
     STARTED_CHECKOUT,
 } from '../shared/restaurant/eventNames.js';
 
-// Olo's addToCart/basket payloads carry only a minimal product ({ id }) with no
-// images; cache images from the richer view/click products to back-fill them.
-const imageById = {};
+// Olo's addToCart/basket/checkout payloads carry only a minimal product ({ id })
+// with no images. Cache images from the richer view/click products, persisted to
+// sessionStorage so they survive page reloads and the hard nav into checkout
+// (where v1.checkout's basket is minimal), then back-fill cart + line items.
+const IMAGE_CACHE_KEY = 'klOloImageById';
+
+function loadImageCache() {
+    try {
+        return JSON.parse(sessionStorage.getItem(IMAGE_CACHE_KEY)) || {};
+    } catch (err) {
+        return {};
+    }
+}
+
+const imageById = loadImageCache();
 
 function rememberProductImage(product) {
     if (!product || product.id == null) return;
     const url = pickImageURL(product.images);
-    if (url) imageById[String(product.id)] = url;
+    if (url && imageById[String(product.id)] !== url) {
+        imageById[String(product.id)] = url;
+        try {
+            sessionStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(imageById));
+        } catch (err) { /* sessionStorage unavailable — fall back to in-memory */ }
+    }
 }
 
 function imageForProductId(id) {
