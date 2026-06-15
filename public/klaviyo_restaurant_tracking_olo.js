@@ -215,11 +215,25 @@
   var STARTED_CHECKOUT = "Started Checkout";
 
   // src/olo/klaviyoUtils.js
-  var imageById = {};
+  var IMAGE_CACHE_KEY = "klOloImageById";
+  function loadImageCache() {
+    try {
+      return JSON.parse(sessionStorage.getItem(IMAGE_CACHE_KEY)) || {};
+    } catch (err) {
+      return {};
+    }
+  }
+  var imageById = loadImageCache();
   function rememberProductImage(product) {
     if (!product || product.id == null) return;
     const url = pickImageURL(product.images);
-    if (url) imageById[String(product.id)] = url;
+    if (url && imageById[String(product.id)] !== url) {
+      imageById[String(product.id)] = url;
+      try {
+        sessionStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(imageById));
+      } catch (err) {
+      }
+    }
   }
   function imageForProductId(id) {
     return id != null && imageById[String(id)] ? imageById[String(id)] : "";
