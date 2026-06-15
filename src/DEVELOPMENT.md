@@ -1,6 +1,8 @@
-# Klaviyo Hotel Tracking
+# Klaviyo Hotels & Restaurants Tracking
 
-Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Cloudbeds, Mews, and Guesty booking engines.
+Tracking scripts for Klaviyo hotel bookings and restaurant orders, with modular utilities. Supports Cloudbeds, Mews, and Guesty (hotels) and Olo (restaurants).
+
+> The repo is named `klaviyo-hotels-tags` for historical reasons but now covers restaurants too. Hotel bundles keep the `klaviyo_hotel_tracking_*` filenames (live customers' tags hard-code them); restaurant bundles use `klaviyo_restaurant_tracking_*`.
 
 ## Project Structure
 
@@ -10,6 +12,10 @@ Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Clo
 │   │   ├── validationUtils.js        # Email and phone validation
 │   │   ├── debugUtils.js             # Debug logging with account-based control
 │   │   ├── debugConfig.js            # Debug configuration (account IDs)
+│   │   ├── klaviyoInstance.js        # Shared window.klaviyo proxy
+│   │   ├── restaurant/               # Normalized F&B event schema (cross-platform parity)
+│   │   │   ├── eventNames.js         # Viewed Product, Added to Cart, Started Checkout
+│   │   │   └── payloads.js           # Shared F&B payload builders
 │   │   └── README.md                 # Shared utilities documentation
 │   ├── cloudbeds/
 │   │   ├── constants.js              # Configuration constants (debug flag, event mapping)
@@ -23,21 +29,28 @@ Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Clo
 │   │   ├── gtmUtils.js               # GTM/dataLayer event handling
 │   │   ├── klaviyoUtils.js           # Klaviyo payload builders and tracking
 │   │   └── klaviyo_hotel_tracking.js # Main Mews tracking script
-│   └── guesty/
-│       ├── constants.js              # Configuration constants (debug flag)
-│       ├── generalUtils.js           # General utility functions (logging, validation, URL parsing)
-│       ├── klaviyoUtils.js           # Klaviyo event tracking and error monitoring
-│       └── klaviyo_hotel_tracking.js # Main Guesty tracking script (network interception)
+│   ├── guesty/
+│   │   ├── constants.js              # Configuration constants (debug flag)
+│   │   ├── generalUtils.js           # General utility functions (logging, validation, URL parsing)
+│   │   ├── klaviyoUtils.js           # Klaviyo event tracking and error monitoring
+│   │   └── klaviyo_hotel_tracking.js # Main Guesty tracking script (network interception)
+│   └── olo/                          # Restaurants (Olo Serve)
+│       ├── constants.js              # Olo event names, fulfillment map, image group
+│       ├── generalUtils.js           # Logging, modifier parsing, brand/image helpers
+│       ├── klaviyoUtils.js           # Olo -> Klaviyo adapters, tracking, guest identify
+│       └── klaviyo_restaurant_tracking.js # Main Olo tracking script (window.Olo event bus)
 ├── .github/
 │   ├── workflows/
 │   │   └── deploy.yml                # GitHub Actions: auto-deploy to GitHub Pages
 │   ├── CODEOWNERS                    # Auto-assigns reviewers on PRs
 │   └── pull_request_template.md      # PR template with checklist
 ├── public/                            # Build output directory
-│   ├── klaviyo_hotel_tracking_cloudbeds.js  # Built Cloudbeds bundle
-│   ├── klaviyo_hotel_tracking_mews.js       # Built Mews bundle
-│   └── klaviyo_hotel_tracking_guesty.js     # Built Guesty bundle
-├── template_hotel.tpl                   # GTM Tag Template
+│   ├── klaviyo_hotel_tracking_cloudbeds.js     # Built Cloudbeds bundle
+│   ├── klaviyo_hotel_tracking_mews.js          # Built Mews bundle
+│   ├── klaviyo_hotel_tracking_guesty.js        # Built Guesty bundle
+│   └── klaviyo_restaurant_tracking_olo.js      # Built Olo bundle
+├── template.tpl                         # GTM Tag Template
+├── metadata.yaml                        # GTM gallery version history (SHA + change notes)
 ├── package.json                         # Dependencies and scripts
 ├── .gitignore                           # Git ignore rules
 └── README.md                            # Public-facing documentation
@@ -74,6 +87,14 @@ Tracking scripts for Klaviyo hotel bookings with modular utilities. Supports Clo
    - Includes error metadata: Failed Event, Error Cause, Customer Account ID
    - Monitoring account credentials are configured via `.env` file
 
+### Olo (Restaurants)
+1. **Viewed Product** - Triggered by Olo's `v1.clickProductLink` / `v1.viewProductDetail` events (de-duped, since which one fires varies by Serve feature flags)
+2. **Added to Cart** - Triggered by `v1.addToCart`
+3. **Started Checkout** - Triggered by `v1.checkout`
+   - Calls Olo's done-callback immediately so guest navigation is never blocked
+   - Identifies the guest from the `/checkout/auth` form (name, email, phone) on submit
+   - Subscribes to the native `window.Olo` event bus (not the GTM dataLayer); maps events into the shared `src/shared/restaurant/` builders; caches product images by id to back-fill cart/checkout line items (Olo's add/checkout payloads omit images)
+
 ## Setup
 
 ### 1. Install dependencies
@@ -106,41 +127,41 @@ These environment variables are injected at build time and replace the placehold
 
 ### Build Scripts
 
-- `npm run build` - Build all scripts (Cloudbeds, Mews, Guesty)
+- `npm run build` - Build all scripts (Cloudbeds, Mews, Guesty, Olo)
 - `npm run build:cloudbeds` - Build only Cloudbeds script
 - `npm run build:mews` - Build only Mews script
 - `npm run build:guesty` - Build only Guesty script
+- `npm run build:olo` - Build only Olo script
 
 ### Watch Scripts (Build Only)
 
 - `npm run watch` - Auto-rebuild Cloudbeds on file changes
 - `npm run watch:mews` - Auto-rebuild Mews on file changes
 - `npm run watch:guesty` - Auto-rebuild Guesty on file changes
+- `npm run watch:olo` - Auto-rebuild Olo on file changes
 
 ### Development Scripts (Build + Auto-Deploy to Surge)
 
 **For active development with automatic deployment to Surge:**
 
-- `npm run dev` - Watch all files and auto-deploy all integrations to Surge
 - `npm run dev:cloudbeds` - Watch Cloudbeds files and auto-deploy to Surge
 - `npm run dev:mews` - Watch Mews files and auto-deploy to Surge
 - `npm run dev:guesty` - Watch Guesty files and auto-deploy to Surge
+- `npm run dev:olo` - Watch Olo files and auto-deploy to Surge
 
-These scripts will:
-1. Watch for file changes in `src/` directories
-2. Automatically rebuild on save
-3. Deploy to Surge for testing
+These use esbuild's watcher (`node build.js <integration> --watch --deploy`) to rebuild on save and then deploy to Surge. Deploys are **serialized** — a save during an in-progress upload queues exactly one more deploy instead of interrupting it, so the Surge domain is never torn down mid-publish. (Requires `surge login` once.)
 
 ### Manual Deployment to Surge
 
-- `npm run deploy` - Build and deploy all integrations to Surge
+- `npm run deploy` - Build and deploy all integrations to their Surge domains
 - `npm run deploy:cloudbeds` - Build and deploy Cloudbeds to Surge
 - `npm run deploy:mews` - Build and deploy Mews to Surge
 - `npm run deploy:guesty` - Build and deploy Guesty to Surge
+- `npm run deploy:olo` - Build and deploy Olo to Surge
 
 ### Adding Utilities
 
-1. Add your utility function to the appropriate utils file (`src/cloudbeds/generalUtils.js` or `src/mews/generalUtils.js`):
+1. Add your utility function to the appropriate utils file (e.g. `src/cloudbeds/generalUtils.js` or `src/olo/generalUtils.js`):
 ```javascript
 export function myUtility() {
     // Your code here
@@ -156,7 +177,7 @@ import { myUtility } from './generalUtils.js';
 ```bash
 npm run deploy:cloudbeds
 # or
-npm run deploy:mews
+npm run deploy:olo
 ```
 
 ## Deployment
@@ -168,17 +189,19 @@ For testing and development, scripts are deployed to Surge:
 **Cloudbeds:** https://klaviyo-hotel-cloudbeds.surge.sh/klaviyo_hotel_tracking_cloudbeds.js
 **Mews:** https://klaviyo-hotel-mews.surge.sh/klaviyo_hotel_tracking_mews.js
 **Guesty:** https://klaviyo-hotel-guesty.surge.sh/klaviyo_hotel_tracking_guesty.js
+**Olo:** https://klaviyo-hotel-olo.surge.sh/klaviyo_restaurant_tracking_olo.js
 
 Deploy manually:
 ```bash
 npm run deploy:cloudbeds
 npm run deploy:mews
 npm run deploy:guesty
+npm run deploy:olo
 ```
 
 Or use auto-deploy during development:
 ```bash
-npm run dev:cloudbeds  # Auto-deploys to Surge on file changes
+npm run dev:olo  # Auto-deploys to Surge on file changes
 ```
 
 ### Production (GitHub Pages)
@@ -186,9 +209,10 @@ npm run dev:cloudbeds  # Auto-deploys to Surge on file changes
 Production scripts are automatically deployed to GitHub Pages when you push to the `master` branch.
 
 **Production URLs:**
-- `https://klaviyo.github.io/tagmanager/klaviyo_hotel_tracking_cloudbeds.js`
-- `https://klaviyo.github.io/tagmanager/klaviyo_hotel_tracking_mews.js`
-- `https://klaviyo.github.io/tagmanager/klaviyo_hotel_tracking_guesty.js`
+- `https://klaviyo.github.io/klaviyo-hotels-tags/klaviyo_hotel_tracking_cloudbeds.js`
+- `https://klaviyo.github.io/klaviyo-hotels-tags/klaviyo_hotel_tracking_mews.js`
+- `https://klaviyo.github.io/klaviyo-hotels-tags/klaviyo_hotel_tracking_guesty.js`
+- `https://klaviyo.github.io/klaviyo-hotels-tags/klaviyo_restaurant_tracking_olo.js`
 
 **Deployment Process:**
 1. Make changes and commit to a branch
@@ -217,11 +241,20 @@ To troubleshoot issues in production, you can update the GitHub Secrets at any t
 2. Re-run the workflow or push a new commit to `master`
 3. The new environment variables will be deployed
 
+### Publishing a GTM gallery version update
+
+The `metadata.yaml` file controls which commit the GTM Community Template Gallery serves. To publish a new template version (per Google's [Update your template](https://developers.google.com/tag-platform/tag-manager/templates/gallery#update_your_template) flow):
+1. Merge the `template.tpl` change to `master`.
+2. Append a new entry to the **top** of `versions` in `metadata.yaml` with the full 40-char **merge-commit SHA** and `changeNotes`.
+3. Commit to `master`; the gallery updates within ~2-3 days.
+
+The JS bundles are served from GitHub Pages (always latest `master`), so tracking-logic fixes deploy on merge without a gallery update — only `template.tpl` (UI/routing) changes need a `metadata.yaml` version bump.
+
 ## Usage
 
-Add the script URL to your GTM Tag Template. See .tpl file for more info.
+Add the script URL to your GTM Tag Template. See the `.tpl` file for more info.
 
-**Note:** While Cloudbeds and Mews listen to GTM dataLayer events, Guesty uses network interception (fetch/XHR) to track events directly from API calls.
+**Note:** Cloudbeds and Mews listen to GTM dataLayer events, Guesty uses network interception (fetch/XHR), and Olo subscribes to the native `window.Olo` event bus.
 
 ## Debug Logging
 
@@ -264,7 +297,7 @@ The codebase uses **esbuild** to bundle modular ES6 code into a single IIFE (Imm
 
 ### Implementation Approaches
 
-**Cloudbeds & Mews (GTM-based):**
+**Cloudbeds & Mews (GTM dataLayer):**
 - Listen to GTM dataLayer events
 - Parse ecommerce data from GTM events
 - Track events when GTM pushes to dataLayer
@@ -275,3 +308,8 @@ The codebase uses **esbuild** to bundle modular ES6 code into a single IIFE (Imm
 - Store listing data to avoid CORS issues
 - Extract checkout details from URL parameters
 - Monitor critical errors with direct API calls
+
+**Olo (window.Olo event bus):**
+- Subscribe to Olo Serve's native `window.Olo.on(...)` events (replay-enabled, so events that fired before the script loaded are still caught)
+- Map `v1.clickProductLink` / `v1.viewProductDetail` / `v1.addToCart` / `v1.checkout` to the normalized F&B events via the shared `src/shared/restaurant/` builders
+- Identify guests from the `/checkout/auth` form on submit
