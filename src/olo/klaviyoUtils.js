@@ -134,7 +134,7 @@ function mapBasketToCart(basket) {
     const b = basket || {};
     const products = Array.isArray(b.basketProducts) ? b.basketProducts : [];
     return {
-        value: b.subTotal,
+        value: b.total, // all-in order total (tax, tip, fees, less discounts) — Klaviyo $value
         brand: getBrandFromHostname(),
         fulfillmentType: mapFulfillmentType(b.handoffMode),
         checkoutURL: currentURL(),
@@ -171,20 +171,58 @@ export function trackViewedProduct(product) {
     });
 }
 
+function basketTotalQuantity() {
+    const b = (window.Olo && window.Olo.data && window.Olo.data.basket) || {};
+    const products = Array.isArray(b.basketProducts) ? b.basketProducts : [];
+    return products.reduce((sum, p) => sum + (Number(p && p.quantity) || 0), 0);
+}
+
+const ADD_POLL_MS = 50;
+const ADD_MAX_WAIT_MS = 800;
+
 export function trackAddedToCart(basketProduct) {
-    const item = mapBasketProductToItem(basketProduct);
-    rememberProductPrice(item.productId, item.price); // cache price for later Viewed Product back-fill
-    if (!item.productName && !item.productId) {
+    const addedItem = mapBasketProductToItem(basketProduct);
+    rememberProductPrice(addedItem.productId, addedItem.price);
+    if (!addedItem.productName && !addedItem.productId) {
         debugLog('Skipping Added to Cart - no product data');
         return;
     }
-    const payload = buildAddedToCartPayload(item);
-    debugLog('Added to Cart payload:', payload);
-    klaviyo.track(ADDED_TO_CART, payload).then(() => {
-        debugLog('Added to Cart tracked');
-    }).catch((err) => {
-        debugLog('Error tracking Added to Cart:', err);
-    });
+
+    // Olo emits v1.addToCart slightly BEFORE it updates window.Olo.data.basket,
+    // so reading immediately misses the just-added item. Wait for the basket's
+    // total quantity to grow (the add landed), then snapshot the full cart for
+    // $value / ItemNames / Items[].
+    const beforeQty = basketTotalQuantity();
+    let waited = 0;
+
+    const fire = () => {
+        const rawBasket = (window.Olo && window.Olo.data && window.Olo.data.basket) || {};
+        let products = Array.isArray(rawBasket.basketProducts) ? rawBasket.basketProducts.slice() : [];
+        // Safety net: guarantee the just-added item is present even if the basket
+        // never caught up.
+        const addedId = basketProduct && basketProduct.product && basketProduct.product.id;
+        const present = addedId != null && products.some((p) => p && p.product && String(p.product.id) === String(addedId));
+        if (!present) products = products.concat([basketProduct]);
+
+        const cart = mapBasketToCart({ ...rawBasket, basketProducts: products });
+        cart.items.forEach((li) => rememberProductPrice(li.productId, li.itemPrice));
+
+        const payload = buildAddedToCartPayload(addedItem, cart);
+        debugLog('Added to Cart payload:', payload);
+        klaviyo.track(ADDED_TO_CART, payload).then(() => {
+            debugLog('Added to Cart tracked');
+        }).catch((err) => {
+            debugLog('Error tracking Added to Cart:', err);
+        });
+    };
+
+    const timer = setInterval(() => {
+        waited += ADD_POLL_MS;
+        if (basketTotalQuantity() > beforeQty || waited >= ADD_MAX_WAIT_MS) {
+            clearInterval(timer);
+            fire();
+        }
+    }, ADD_POLL_MS);
 }
 
 export function trackStartedCheckout(basket) {

@@ -145,30 +145,50 @@
   function money(value) {
     return Math.round(toNumber(value) * 100) / 100;
   }
-  function buildItemPayload(item) {
+  function buildViewedProductPayload(item) {
     const it = item || {};
-    return {
+    const hasPrice = it.price != null && isFinite(Number(it.price));
+    const modifiers = toArray(it.modifiers);
+    const payload = {
       ProductName: toStringSafe(it.productName),
       ProductID: toStringSafe(it.productId),
       Brand: toStringSafe(it.brand),
-      Price: money(it.price),
+      Price: hasPrice ? money(it.price) : void 0,
       Categories: toArray(it.categories),
       ImageURL: toStringSafe(it.imageURL),
       URL: toStringSafe(it.url),
-      Modifiers: toArray(it.modifiers)
+      // A product view has no chosen modifiers, so omit Modifiers when empty
+      // rather than sending an always-blank array.
+      Modifiers: modifiers.length ? modifiers : void 0
     };
+    if (!hasPrice) delete payload.Price;
+    if (!modifiers.length) delete payload.Modifiers;
+    return payload;
   }
-  function buildViewedProductPayload(item) {
-    return buildItemPayload(item);
-  }
-  function buildAddedToCartPayload(item) {
-    const it = item || {};
-    return {
-      ...buildItemPayload(it),
-      // Added to Cart fires per item type; Quantity captures multiples of the
-      // same item added at once (e.g. 3 of one bowl).
-      Quantity: toNumber(it.quantity, 1)
+  function buildAddedToCartPayload(addedItem, cart) {
+    const a = addedItem || {};
+    const c = cart || {};
+    const lineItems = Array.isArray(c.items) ? c.items.map(buildLineItem) : [];
+    const providedValue = toNumber(c.value, NaN);
+    const summed = lineItems.reduce((sum, li) => sum + li.RowTotal, 0);
+    const value = isFinite(providedValue) ? money(providedValue) : money(summed);
+    const hasPrice = a.price != null && isFinite(Number(a.price));
+    const payload = {
+      $value: value,
+      AddedItemProductName: toStringSafe(a.productName),
+      AddedItemProductID: toStringSafe(a.productId),
+      AddedItemCategories: toArray(a.categories),
+      AddedItemImageURL: toStringSafe(a.imageURL),
+      AddedItemURL: toStringSafe(a.url),
+      AddedItemPrice: hasPrice ? money(a.price) : void 0,
+      AddedItemQuantity: toNumber(a.quantity, 1),
+      AddedItemModifiers: toArray(a.modifiers),
+      ItemNames: lineItems.map((li) => li.ProductName).filter((n) => n !== ""),
+      CheckoutURL: toStringSafe(c.checkoutURL),
+      Items: lineItems
     };
+    if (!hasPrice) delete payload.AddedItemPrice;
+    return payload;
   }
   function buildLineItem(lineItem) {
     const li = lineItem || {};
@@ -329,7 +349,8 @@
     const b = basket || {};
     const products = Array.isArray(b.basketProducts) ? b.basketProducts : [];
     return {
-      value: b.subTotal,
+      value: b.total,
+      // all-in order total (tax, tip, fees, less discounts) — Klaviyo $value
       brand: getBrandFromHostname(),
       fulfillmentType: mapFulfillmentType(b.handoffMode),
       checkoutURL: currentURL(),
@@ -360,20 +381,45 @@
       debugLog("Error tracking Viewed Product:", err);
     });
   }
+  function basketTotalQuantity() {
+    const b = window.Olo && window.Olo.data && window.Olo.data.basket || {};
+    const products = Array.isArray(b.basketProducts) ? b.basketProducts : [];
+    return products.reduce((sum, p) => sum + (Number(p && p.quantity) || 0), 0);
+  }
+  var ADD_POLL_MS = 50;
+  var ADD_MAX_WAIT_MS = 800;
   function trackAddedToCart(basketProduct) {
-    const item = mapBasketProductToItem(basketProduct);
-    rememberProductPrice(item.productId, item.price);
-    if (!item.productName && !item.productId) {
+    const addedItem = mapBasketProductToItem(basketProduct);
+    rememberProductPrice(addedItem.productId, addedItem.price);
+    if (!addedItem.productName && !addedItem.productId) {
       debugLog("Skipping Added to Cart - no product data");
       return;
     }
-    const payload = buildAddedToCartPayload(item);
-    debugLog("Added to Cart payload:", payload);
-    klaviyo.track(ADDED_TO_CART, payload).then(() => {
-      debugLog("Added to Cart tracked");
-    }).catch((err) => {
-      debugLog("Error tracking Added to Cart:", err);
-    });
+    const beforeQty = basketTotalQuantity();
+    let waited = 0;
+    const fire = () => {
+      const rawBasket = window.Olo && window.Olo.data && window.Olo.data.basket || {};
+      let products = Array.isArray(rawBasket.basketProducts) ? rawBasket.basketProducts.slice() : [];
+      const addedId = basketProduct && basketProduct.product && basketProduct.product.id;
+      const present = addedId != null && products.some((p) => p && p.product && String(p.product.id) === String(addedId));
+      if (!present) products = products.concat([basketProduct]);
+      const cart = mapBasketToCart({ ...rawBasket, basketProducts: products });
+      cart.items.forEach((li) => rememberProductPrice(li.productId, li.itemPrice));
+      const payload = buildAddedToCartPayload(addedItem, cart);
+      debugLog("Added to Cart payload:", payload);
+      klaviyo.track(ADDED_TO_CART, payload).then(() => {
+        debugLog("Added to Cart tracked");
+      }).catch((err) => {
+        debugLog("Error tracking Added to Cart:", err);
+      });
+    };
+    const timer = setInterval(() => {
+      waited += ADD_POLL_MS;
+      if (basketTotalQuantity() > beforeQty || waited >= ADD_MAX_WAIT_MS) {
+        clearInterval(timer);
+        fire();
+      }
+    }, ADD_POLL_MS);
   }
   function trackStartedCheckout(basket) {
     const cart = mapBasketToCart(basket);

@@ -32,33 +32,59 @@ function money(value) {
     return Math.round(toNumber(value) * 100) / 100;
 }
 
-// Shared item payload for Viewed Product and Added to Cart.
-function buildItemPayload(item) {
+// Viewed Product payload. Price is omitted entirely when unknown (e.g. Olo
+// doesn't expose price on product views for fixed-price items) — we never emit
+// a misleading Price: 0.
+export function buildViewedProductPayload(item) {
     const it = item || {};
-    return {
+    const hasPrice = it.price != null && isFinite(Number(it.price));
+    const modifiers = toArray(it.modifiers);
+    const payload = {
         ProductName: toStringSafe(it.productName),
         ProductID: toStringSafe(it.productId),
         Brand: toStringSafe(it.brand),
-        Price: money(it.price),
+        Price: hasPrice ? money(it.price) : undefined,
         Categories: toArray(it.categories),
         ImageURL: toStringSafe(it.imageURL),
         URL: toStringSafe(it.url),
-        Modifiers: toArray(it.modifiers),
+        // A product view has no chosen modifiers, so omit Modifiers when empty
+        // rather than sending an always-blank array.
+        Modifiers: modifiers.length ? modifiers : undefined,
     };
+    if (!hasPrice) delete payload.Price;
+    if (!modifiers.length) delete payload.Modifiers;
+    return payload;
 }
 
-export function buildViewedProductPayload(item) {
-    return buildItemPayload(item);
-}
+// Added to Cart — the just-added item (AddedItem* fields) plus the full current
+// cart ($value, ItemNames, Items[]), following Klaviyo's standard schema.
+// AddedItemPrice is omitted when unknown.
+export function buildAddedToCartPayload(addedItem, cart) {
+    const a = addedItem || {};
+    const c = cart || {};
+    const lineItems = Array.isArray(c.items) ? c.items.map(buildLineItem) : [];
 
-export function buildAddedToCartPayload(item) {
-    const it = item || {};
-    return {
-        ...buildItemPayload(it),
-        // Added to Cart fires per item type; Quantity captures multiples of the
-        // same item added at once (e.g. 3 of one bowl).
-        Quantity: toNumber(it.quantity, 1),
+    const providedValue = toNumber(c.value, NaN);
+    const summed = lineItems.reduce((sum, li) => sum + li.RowTotal, 0);
+    const value = isFinite(providedValue) ? money(providedValue) : money(summed);
+
+    const hasPrice = a.price != null && isFinite(Number(a.price));
+    const payload = {
+        $value: value,
+        AddedItemProductName: toStringSafe(a.productName),
+        AddedItemProductID: toStringSafe(a.productId),
+        AddedItemCategories: toArray(a.categories),
+        AddedItemImageURL: toStringSafe(a.imageURL),
+        AddedItemURL: toStringSafe(a.url),
+        AddedItemPrice: hasPrice ? money(a.price) : undefined,
+        AddedItemQuantity: toNumber(a.quantity, 1),
+        AddedItemModifiers: toArray(a.modifiers),
+        ItemNames: lineItems.map((li) => li.ProductName).filter((n) => n !== ""),
+        CheckoutURL: toStringSafe(c.checkoutURL),
+        Items: lineItems,
     };
+    if (!hasPrice) delete payload.AddedItemPrice;
+    return payload;
 }
 
 // One checkout line item; RowTotal = ItemPrice × Quantity.
