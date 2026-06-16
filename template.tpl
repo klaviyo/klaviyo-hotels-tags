@@ -11,7 +11,7 @@ ___INFO___
 {
   "type": "TAG",
   "id": "cvt_temp_public_id",
-  "version": 2,
+  "version": 1,
   "securityGroups": [],
   "displayName": "Klaviyo Hospitality Tracking",
   "categories": ["EMAIL_MARKETING", "ANALYTICS", "MARKETING"],
