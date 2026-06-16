@@ -79,3 +79,25 @@ export function currentURL() {
         return '';
     }
 }
+
+// Canonical Olo product page URL: {origin}/menu/{vendorSlug}/products/{id}
+// (matches Olo Serve's product path). Falls back to the current URL.
+export function productURL(productId) {
+    try {
+        const origin = (window.location && window.location.origin) || '';
+        const vendor = (window.Olo && window.Olo.data && window.Olo.data.vendor) || {};
+        if (origin && vendor.slug && productId != null) {
+            return origin + '/menu/' + vendor.slug + '/products/' + productId;
+        }
+    } catch (err) { /* fall through */ }
+    return currentURL();
+}
+
+// Olo checkout page URL: {origin}/checkout.
+export function checkoutURL() {
+    try {
+        const origin = (window.location && window.location.origin) || '';
+        if (origin) return origin + '/checkout';
+    } catch (err) { /* fall through */ }
+    return currentURL();
+}

@@ -79,7 +79,7 @@ export function buildAddedToCartPayload(addedItem, cart) {
         AddedItemPrice: hasPrice ? money(a.price) : undefined,
         AddedItemQuantity: toNumber(a.quantity, 1),
         AddedItemModifiers: toArray(a.modifiers),
-        ItemNames: lineItems.map((li) => li.ProductName).filter((n) => n !== ""),
+        ItemNames: dedupe(lineItems.map((li) => li.ProductName).filter((n) => n !== "")),
         CheckoutURL: toStringSafe(c.checkoutURL),
         Items: lineItems,
     };
@@ -121,7 +121,7 @@ export function buildStartedCheckoutPayload(cart) {
 
     return {
         $value: value,
-        ItemNames: lineItems.map((li) => li.ProductName).filter((n) => n !== ""),
+        ItemNames: dedupe(lineItems.map((li) => li.ProductName).filter((n) => n !== "")),
         Quantity: lineItems.reduce((sum, li) => sum + li.Quantity, 0),
         CheckoutURL: toStringSafe(c.checkoutURL),
         Categories: categories,
