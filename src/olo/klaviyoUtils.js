@@ -46,15 +46,49 @@ function imageForProductId(id) {
     return id != null && imageById[String(id)] ? imageById[String(id)] : '';
 }
 
+// Olo's product-view events omit price for fixed-price items (only build-your-own
+// items carry baseCost), but addToCart/checkout expose unitCost. Cache price by
+// product id (sessionStorage) so a Viewed Product can pick it up once it's known
+// from any add/checkout in the session. (First view of a never-added fixed-price
+// item still has no price source, so Price is 0.)
+const PRICE_CACHE_KEY = 'klOloPriceById';
+
+function loadPriceCache() {
+    try {
+        return JSON.parse(sessionStorage.getItem(PRICE_CACHE_KEY)) || {};
+    } catch (err) {
+        return {};
+    }
+}
+
+const priceById = loadPriceCache();
+
+function rememberProductPrice(id, price) {
+    if (id == null) return;
+    const n = Number(price);
+    if (!isFinite(n) || n <= 0) return;
+    if (priceById[String(id)] !== n) {
+        priceById[String(id)] = n;
+        try {
+            sessionStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(priceById));
+        } catch (err) { /* sessionStorage unavailable — fall back to in-memory */ }
+    }
+}
+
+function priceForProductId(id) {
+    return id != null && priceById[String(id)] ? priceById[String(id)] : undefined;
+}
+
 // viewProductDetail / clickProductLink product -> neutral item.
-// baseCost is often absent on product views, so Price degrades to 0.
+// baseCost is usually absent on product views; fall back to a price cached from
+// a prior add/checkout this session, else Price degrades to 0.
 function mapProductToItem(product) {
     const p = product || {};
     return {
         productName: p.name,
         productId: p.id,
         brand: getBrandFromHostname(),
-        price: p.baseCost,
+        price: p.baseCost != null ? p.baseCost : priceForProductId(p.id),
         categories: p.category && p.category.name ? [p.category.name] : [],
         imageURL: pickImageURL(p.images),
         url: currentURL(),
@@ -71,6 +105,7 @@ function mapBasketProductToItem(basketProduct) {
         productId: product.id,
         brand: getBrandFromHostname(),
         price: bp.unitCost,
+        quantity: bp.quantity,
         categories: bp.categoryName ? [bp.categoryName] : [],
         imageURL: pickImageURL(product.images) || imageForProductId(product.id),
         url: currentURL(),
@@ -138,6 +173,7 @@ export function trackViewedProduct(product) {
 
 export function trackAddedToCart(basketProduct) {
     const item = mapBasketProductToItem(basketProduct);
+    rememberProductPrice(item.productId, item.price); // cache price for later Viewed Product back-fill
     if (!item.productName && !item.productId) {
         debugLog('Skipping Added to Cart - no product data');
         return;
@@ -153,6 +189,7 @@ export function trackAddedToCart(basketProduct) {
 
 export function trackStartedCheckout(basket) {
     const cart = mapBasketToCart(basket);
+    cart.items.forEach((li) => rememberProductPrice(li.productId, li.itemPrice));
     const payload = buildStartedCheckoutPayload(cart);
     debugLog('Started Checkout payload:', payload);
     klaviyo.track(STARTED_CHECKOUT, payload).then(() => {

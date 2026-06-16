@@ -52,7 +52,13 @@ export function buildViewedProductPayload(item) {
 }
 
 export function buildAddedToCartPayload(item) {
-    return buildItemPayload(item);
+    const it = item || {};
+    return {
+        ...buildItemPayload(it),
+        // Added to Cart fires per item type; Quantity captures multiples of the
+        // same item added at once (e.g. 3 of one bowl).
+        Quantity: toNumber(it.quantity, 1),
+    };
 }
 
 // One checkout line item; RowTotal = ItemPrice × Quantity.
@@ -90,8 +96,10 @@ export function buildStartedCheckoutPayload(cart) {
     return {
         $value: value,
         ItemNames: lineItems.map((li) => li.ProductName).filter((n) => n !== ""),
+        Quantity: lineItems.reduce((sum, li) => sum + li.Quantity, 0),
         CheckoutURL: toStringSafe(c.checkoutURL),
         Categories: categories,
+        Modifiers: dedupe(lineItems.reduce((acc, li) => acc.concat(li.Modifiers), [])),
         FulfillmentType: toStringSafe(c.fulfillmentType),
         Brand: toStringSafe(c.brand),
         Items: lineItems,

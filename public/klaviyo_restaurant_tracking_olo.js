@@ -162,7 +162,13 @@
     return buildItemPayload(item);
   }
   function buildAddedToCartPayload(item) {
-    return buildItemPayload(item);
+    const it = item || {};
+    return {
+      ...buildItemPayload(it),
+      // Added to Cart fires per item type; Quantity captures multiples of the
+      // same item added at once (e.g. 3 of one bowl).
+      Quantity: toNumber(it.quantity, 1)
+    };
   }
   function buildLineItem(lineItem) {
     const li = lineItem || {};
@@ -190,8 +196,10 @@
     return {
       $value: value,
       ItemNames: lineItems.map((li) => li.ProductName).filter((n) => n !== ""),
+      Quantity: lineItems.reduce((sum, li) => sum + li.Quantity, 0),
       CheckoutURL: toStringSafe(c.checkoutURL),
       Categories: categories,
+      Modifiers: dedupe(lineItems.reduce((acc, li) => acc.concat(li.Modifiers), [])),
       FulfillmentType: toStringSafe(c.fulfillmentType),
       Brand: toStringSafe(c.brand),
       Items: lineItems
@@ -251,13 +259,37 @@
   function imageForProductId(id) {
     return id != null && imageById[String(id)] ? imageById[String(id)] : "";
   }
+  var PRICE_CACHE_KEY = "klOloPriceById";
+  function loadPriceCache() {
+    try {
+      return JSON.parse(sessionStorage.getItem(PRICE_CACHE_KEY)) || {};
+    } catch (err) {
+      return {};
+    }
+  }
+  var priceById = loadPriceCache();
+  function rememberProductPrice(id, price) {
+    if (id == null) return;
+    const n = Number(price);
+    if (!isFinite(n) || n <= 0) return;
+    if (priceById[String(id)] !== n) {
+      priceById[String(id)] = n;
+      try {
+        sessionStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(priceById));
+      } catch (err) {
+      }
+    }
+  }
+  function priceForProductId(id) {
+    return id != null && priceById[String(id)] ? priceById[String(id)] : void 0;
+  }
   function mapProductToItem(product) {
     const p = product || {};
     return {
       productName: p.name,
       productId: p.id,
       brand: getBrandFromHostname(),
-      price: p.baseCost,
+      price: p.baseCost != null ? p.baseCost : priceForProductId(p.id),
       categories: p.category && p.category.name ? [p.category.name] : [],
       imageURL: pickImageURL(p.images),
       url: currentURL(),
@@ -272,6 +304,7 @@
       productId: product.id,
       brand: getBrandFromHostname(),
       price: bp.unitCost,
+      quantity: bp.quantity,
       categories: bp.categoryName ? [bp.categoryName] : [],
       imageURL: pickImageURL(product.images) || imageForProductId(product.id),
       url: currentURL(),
@@ -329,6 +362,7 @@
   }
   function trackAddedToCart(basketProduct) {
     const item = mapBasketProductToItem(basketProduct);
+    rememberProductPrice(item.productId, item.price);
     if (!item.productName && !item.productId) {
       debugLog("Skipping Added to Cart - no product data");
       return;
@@ -343,6 +377,7 @@
   }
   function trackStartedCheckout(basket) {
     const cart = mapBasketToCart(basket);
+    cart.items.forEach((li) => rememberProductPrice(li.productId, li.itemPrice));
     const payload = buildStartedCheckoutPayload(cart);
     debugLog("Started Checkout payload:", payload);
     klaviyo.track(STARTED_CHECKOUT, payload).then(() => {
