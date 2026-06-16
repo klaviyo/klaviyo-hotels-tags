@@ -1,6 +1,6 @@
 // Constants for Olo Serve tracking.
 
-export const DEBUG = false;
+export const DEBUG = true;
 
 // Olo Serve "global events" (window.Olo.on) -> normalized Klaviyo events.
 // Viewed Product listens to both clickProductLink and viewProductDetail because

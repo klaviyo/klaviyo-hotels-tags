@@ -3,7 +3,7 @@
   var define_process_env_DEBUG_ACCOUNT_IDS_default = [];
 
   // src/olo/constants.js
-  var DEBUG = false;
+  var DEBUG = true;
   var OLO_EVENTS = {
     VIEW_PRODUCT_DETAIL: "v1.viewProductDetail",
     // (product, viewIn)
@@ -127,6 +127,25 @@
       return "";
     }
   }
+  function productURL(productId) {
+    try {
+      const origin = window.location && window.location.origin || "";
+      const vendor = window.Olo && window.Olo.data && window.Olo.data.vendor || {};
+      if (origin && vendor.slug && productId != null) {
+        return origin + "/menu/" + vendor.slug + "/products/" + productId;
+      }
+    } catch (err) {
+    }
+    return currentURL();
+  }
+  function checkoutURL() {
+    try {
+      const origin = window.location && window.location.origin || "";
+      if (origin) return origin + "/checkout";
+    } catch (err) {
+    }
+    return currentURL();
+  }
 
   // src/shared/restaurant/payloads.js
   function toNumber(value, fallback = 0) {
@@ -145,24 +164,50 @@
   function money(value) {
     return Math.round(toNumber(value) * 100) / 100;
   }
-  function buildItemPayload(item) {
+  function buildViewedProductPayload(item) {
     const it = item || {};
-    return {
+    const hasPrice = it.price != null && isFinite(Number(it.price));
+    const modifiers = toArray(it.modifiers);
+    const payload = {
       ProductName: toStringSafe(it.productName),
       ProductID: toStringSafe(it.productId),
       Brand: toStringSafe(it.brand),
-      Price: money(it.price),
+      Price: hasPrice ? money(it.price) : void 0,
       Categories: toArray(it.categories),
       ImageURL: toStringSafe(it.imageURL),
       URL: toStringSafe(it.url),
-      Modifiers: toArray(it.modifiers)
+      // A product view has no chosen modifiers, so omit Modifiers when empty
+      // rather than sending an always-blank array.
+      Modifiers: modifiers.length ? modifiers : void 0
     };
+    if (!hasPrice) delete payload.Price;
+    if (!modifiers.length) delete payload.Modifiers;
+    return payload;
   }
-  function buildViewedProductPayload(item) {
-    return buildItemPayload(item);
-  }
-  function buildAddedToCartPayload(item) {
-    return buildItemPayload(item);
+  function buildAddedToCartPayload(addedItem, cart) {
+    const a = addedItem || {};
+    const c = cart || {};
+    const lineItems = Array.isArray(c.items) ? c.items.map(buildLineItem) : [];
+    const providedValue = toNumber(c.value, NaN);
+    const summed = lineItems.reduce((sum, li) => sum + li.RowTotal, 0);
+    const value = isFinite(providedValue) ? money(providedValue) : money(summed);
+    const hasPrice = a.price != null && isFinite(Number(a.price));
+    const payload = {
+      $value: value,
+      AddedItemProductName: toStringSafe(a.productName),
+      AddedItemProductID: toStringSafe(a.productId),
+      AddedItemCategories: toArray(a.categories),
+      AddedItemImageURL: toStringSafe(a.imageURL),
+      AddedItemURL: toStringSafe(a.url),
+      AddedItemPrice: hasPrice ? money(a.price) : void 0,
+      AddedItemQuantity: toNumber(a.quantity, 1),
+      AddedItemModifiers: toArray(a.modifiers),
+      ItemNames: dedupe(lineItems.map((li) => li.ProductName).filter((n) => n !== "")),
+      CheckoutURL: toStringSafe(c.checkoutURL),
+      Items: lineItems
+    };
+    if (!hasPrice) delete payload.AddedItemPrice;
+    return payload;
   }
   function buildLineItem(lineItem) {
     const li = lineItem || {};
@@ -189,9 +234,11 @@
     const categories = c.categories ? toArray(c.categories) : dedupe(lineItems.reduce((acc, li) => acc.concat(li.ProductCategories), []));
     return {
       $value: value,
-      ItemNames: lineItems.map((li) => li.ProductName).filter((n) => n !== ""),
+      ItemNames: dedupe(lineItems.map((li) => li.ProductName).filter((n) => n !== "")),
+      Quantity: lineItems.reduce((sum, li) => sum + li.Quantity, 0),
       CheckoutURL: toStringSafe(c.checkoutURL),
       Categories: categories,
+      Modifiers: dedupe(lineItems.reduce((acc, li) => acc.concat(li.Modifiers), [])),
       FulfillmentType: toStringSafe(c.fulfillmentType),
       Brand: toStringSafe(c.brand),
       Items: lineItems
@@ -251,16 +298,40 @@
   function imageForProductId(id) {
     return id != null && imageById[String(id)] ? imageById[String(id)] : "";
   }
+  var PRICE_CACHE_KEY = "klOloPriceById";
+  function loadPriceCache() {
+    try {
+      return JSON.parse(sessionStorage.getItem(PRICE_CACHE_KEY)) || {};
+    } catch (err) {
+      return {};
+    }
+  }
+  var priceById = loadPriceCache();
+  function rememberProductPrice(id, price) {
+    if (id == null) return;
+    const n = Number(price);
+    if (!isFinite(n) || n <= 0) return;
+    if (priceById[String(id)] !== n) {
+      priceById[String(id)] = n;
+      try {
+        sessionStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(priceById));
+      } catch (err) {
+      }
+    }
+  }
+  function priceForProductId(id) {
+    return id != null && priceById[String(id)] ? priceById[String(id)] : void 0;
+  }
   function mapProductToItem(product) {
     const p = product || {};
     return {
       productName: p.name,
       productId: p.id,
       brand: getBrandFromHostname(),
-      price: p.baseCost,
+      price: p.baseCost != null ? p.baseCost : priceForProductId(p.id),
       categories: p.category && p.category.name ? [p.category.name] : [],
       imageURL: pickImageURL(p.images),
-      url: currentURL(),
+      url: productURL(p.id),
       modifiers: []
     };
   }
@@ -272,9 +343,10 @@
       productId: product.id,
       brand: getBrandFromHostname(),
       price: bp.unitCost,
+      quantity: bp.quantity,
       categories: bp.categoryName ? [bp.categoryName] : [],
       imageURL: pickImageURL(product.images) || imageForProductId(product.id),
-      url: currentURL(),
+      url: productURL(product.id),
       modifiers: parseModifiers(bp.customizeDescription)
     };
   }
@@ -286,7 +358,7 @@
       productName: bp.productName || product.name,
       quantity: bp.quantity,
       itemPrice: bp.unitCost,
-      productURL: currentURL(),
+      productURL: productURL(product.id),
       imageURL: pickImageURL(product.images) || imageForProductId(product.id),
       productCategories: bp.categoryName ? [bp.categoryName] : [],
       modifiers: parseModifiers(bp.customizeDescription)
@@ -296,10 +368,11 @@
     const b = basket || {};
     const products = Array.isArray(b.basketProducts) ? b.basketProducts : [];
     return {
-      value: b.subTotal,
+      value: b.total,
+      // all-in order total (tax, tip, fees, less discounts) — Klaviyo $value
       brand: getBrandFromHostname(),
       fulfillmentType: mapFulfillmentType(b.handoffMode),
-      checkoutURL: currentURL(),
+      checkoutURL: checkoutURL(),
       items: products.map(mapBasketProductToLineItem)
     };
   }
@@ -327,22 +400,81 @@
       debugLog("Error tracking Viewed Product:", err);
     });
   }
+  function basketTotalQuantity() {
+    const b = window.Olo && window.Olo.data && window.Olo.data.basket || {};
+    const products = Array.isArray(b.basketProducts) ? b.basketProducts : [];
+    return products.reduce((sum, p) => sum + (Number(p && p.quantity) || 0), 0);
+  }
+  var ADD_POLL_MS = 50;
+  var ADD_MAX_WAIT_MS = 800;
   function trackAddedToCart(basketProduct) {
-    const item = mapBasketProductToItem(basketProduct);
-    if (!item.productName && !item.productId) {
+    const addedItem = mapBasketProductToItem(basketProduct);
+    rememberProductPrice(addedItem.productId, addedItem.price);
+    if (!addedItem.productName && !addedItem.productId) {
       debugLog("Skipping Added to Cart - no product data");
       return;
     }
-    const payload = buildAddedToCartPayload(item);
-    debugLog("Added to Cart payload:", payload);
-    klaviyo.track(ADDED_TO_CART, payload).then(() => {
-      debugLog("Added to Cart tracked");
-    }).catch((err) => {
-      debugLog("Error tracking Added to Cart:", err);
-    });
+    const beforeQty = basketTotalQuantity();
+    let waited = 0;
+    const fire = (basketGrew) => {
+      const rawBasket = window.Olo && window.Olo.data && window.Olo.data.basket || {};
+      const cartBasket = { ...rawBasket };
+      let products = Array.isArray(rawBasket.basketProducts) ? rawBasket.basketProducts.slice() : [];
+      if (!basketGrew) {
+        const addedId = basketProduct && basketProduct.product && basketProduct.product.id;
+        if (addedId != null) {
+          const idx = products.findIndex((p) => p && p.product && String(p.product.id) === String(addedId));
+          if (idx >= 0) products[idx] = basketProduct;
+          else products.push(basketProduct);
+        }
+        delete cartBasket.total;
+      }
+      cartBasket.basketProducts = products;
+      const cart = mapBasketToCart(cartBasket);
+      cart.items.forEach((li) => rememberProductPrice(li.productId, li.itemPrice));
+      const payload = buildAddedToCartPayload(addedItem, cart);
+      debugLog("Added to Cart payload:", payload);
+      klaviyo.track(ADDED_TO_CART, payload).then(() => {
+        debugLog("Added to Cart tracked");
+      }).catch((err) => {
+        debugLog("Error tracking Added to Cart:", err);
+      });
+    };
+    const timer = setInterval(() => {
+      waited += ADD_POLL_MS;
+      const grew = basketTotalQuantity() > beforeQty;
+      if (grew || waited >= ADD_MAX_WAIT_MS) {
+        clearInterval(timer);
+        fire(grew);
+      }
+    }, ADD_POLL_MS);
+  }
+  var CHECKOUT_DEDUPE_MS = 5e3;
+  var CHECKOUT_LAST_KEY = "klOloLastCheckout";
+  function checkoutFiredRecently(guid) {
+    try {
+      const last = JSON.parse(sessionStorage.getItem(CHECKOUT_LAST_KEY));
+      return !!last && last.guid === guid && Date.now() - last.at < CHECKOUT_DEDUPE_MS;
+    } catch (err) {
+      return false;
+    }
+  }
+  function markCheckoutFired(guid) {
+    try {
+      sessionStorage.setItem(CHECKOUT_LAST_KEY, JSON.stringify({ guid, at: Date.now() }));
+    } catch (err) {
+    }
   }
   function trackStartedCheckout(basket) {
-    const cart = mapBasketToCart(basket);
+    const b = basket || {};
+    const guid = b.guid || b.id || "";
+    if (checkoutFiredRecently(guid)) {
+      debugLog("Skipping Started Checkout fired in quick succession for basket", guid);
+      return;
+    }
+    markCheckoutFired(guid);
+    const cart = mapBasketToCart(b);
+    cart.items.forEach((li) => rememberProductPrice(li.productId, li.itemPrice));
     const payload = buildStartedCheckoutPayload(cart);
     debugLog("Started Checkout payload:", payload);
     klaviyo.track(STARTED_CHECKOUT, payload).then(() => {
@@ -423,8 +555,22 @@
       if (typeof done === "function") {
         setTimeout(done, 0);
       }
-      trackStartedCheckout(basket);
     });
+  }
+  function trackCheckoutOnPage() {
+    if (window.location.pathname.indexOf("/checkout") === -1) return;
+    let waited = 0;
+    const timer = setInterval(function() {
+      const basket = window.Olo && window.Olo.data && window.Olo.data.basket;
+      if (basket && Array.isArray(basket.basketProducts) && basket.basketProducts.length) {
+        clearInterval(timer);
+        trackStartedCheckout(basket);
+      } else if (waited >= MAX_WAIT_MS) {
+        clearInterval(timer);
+        debugLog("Checkout page: basket not populated within " + MAX_WAIT_MS + "ms");
+      }
+      waited += POLL_INTERVAL_MS;
+    }, POLL_INTERVAL_MS);
   }
   (function() {
     debugLog("Script initialized");
@@ -445,6 +591,7 @@
       }, POLL_INTERVAL_MS);
     }
     startIdentifyMonitoring();
+    trackCheckoutOnPage();
     debugLog("Setup complete");
   })();
 })();
