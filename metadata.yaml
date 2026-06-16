@@ -1,7 +1,7 @@
   homepage: "https://www.klaviyo.com"
   documentation: "https://github.com/klaviyo/klaviyo-hotels-tags/blob/master/README.md"
   versions:
-    - sha: c4c5ef06b4ea2cc6111891aa2a5a7e0d6399309b
+    - sha: dae5b78f70962e6cf0d1abd5a46fee6512896dcd
       changeNotes: |
         Restaurant Ordering Support (Olo)
         - Added Olo (Olo Serve) tracking: Viewed Product, Added to Cart, Started Checkout
