@@ -39,13 +39,33 @@ function subscribe() {
     });
 
     on(OLO_EVENTS.CHECKOUT, function (basket, done) {
-        // Serve waits on this callback before navigating to checkout — call it
-        // immediately so we never stall the guest, then track.
+        // Don't track here: firing during the cart -> checkout navigation gets the
+        // request cancelled by the redirect. Just release Serve's navigation so we
+        // never stall the guest. Started Checkout fires from the checkout page
+        // instead (trackCheckoutOnPage) — a stable destination where the request
+        // isn't cancelled.
         if (typeof done === 'function') {
             setTimeout(done, 0);
         }
-        trackStartedCheckout(basket);
     });
+}
+
+// Fire Started Checkout from the checkout page, reading the live basket once
+// it's populated. De-duped per basket in trackStartedCheckout.
+function trackCheckoutOnPage() {
+    if (window.location.pathname.indexOf('/checkout') === -1) return;
+    let waited = 0;
+    const timer = setInterval(function () {
+        const basket = window.Olo && window.Olo.data && window.Olo.data.basket;
+        if (basket && Array.isArray(basket.basketProducts) && basket.basketProducts.length) {
+            clearInterval(timer);
+            trackStartedCheckout(basket);
+        } else if (waited >= MAX_WAIT_MS) {
+            clearInterval(timer);
+            debugLog('Checkout page: basket not populated within ' + MAX_WAIT_MS + 'ms');
+        }
+        waited += POLL_INTERVAL_MS;
+    }, POLL_INTERVAL_MS);
 }
 
 (function () {
@@ -70,6 +90,9 @@ function subscribe() {
 
     // Identify guests from the /checkout/auth form (independent of the bus).
     startIdentifyMonitoring();
+
+    // Fire Started Checkout from the checkout page (reliable — see above).
+    trackCheckoutOnPage();
 
     debugLog('Setup complete');
 })();

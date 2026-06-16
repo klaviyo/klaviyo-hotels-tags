@@ -1,7 +1,7 @@
 // Olo -> Klaviyo adapters: map Olo event args into the shared neutral inputs,
 // run the F&B builders, and track via Klaviyo.
 
-import { debugLog, parseModifiers, mapFulfillmentType, pickImageURL, getBrandFromHostname, currentURL } from './generalUtils.js';
+import { debugLog, parseModifiers, mapFulfillmentType, pickImageURL, getBrandFromHostname, productURL, checkoutURL } from './generalUtils.js';
 import { klaviyo } from '../shared/klaviyoInstance.js';
 import {
     buildViewedProductPayload,
@@ -46,18 +46,52 @@ function imageForProductId(id) {
     return id != null && imageById[String(id)] ? imageById[String(id)] : '';
 }
 
+// Olo's product-view events omit price for fixed-price items (only build-your-own
+// items carry baseCost), but addToCart/checkout expose unitCost. Cache price by
+// product id (sessionStorage) so a Viewed Product can pick it up once it's known
+// from any add/checkout in the session. (First view of a never-added fixed-price
+// item still has no price source, so Price is 0.)
+const PRICE_CACHE_KEY = 'klOloPriceById';
+
+function loadPriceCache() {
+    try {
+        return JSON.parse(sessionStorage.getItem(PRICE_CACHE_KEY)) || {};
+    } catch (err) {
+        return {};
+    }
+}
+
+const priceById = loadPriceCache();
+
+function rememberProductPrice(id, price) {
+    if (id == null) return;
+    const n = Number(price);
+    if (!isFinite(n) || n <= 0) return;
+    if (priceById[String(id)] !== n) {
+        priceById[String(id)] = n;
+        try {
+            sessionStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(priceById));
+        } catch (err) { /* sessionStorage unavailable — fall back to in-memory */ }
+    }
+}
+
+function priceForProductId(id) {
+    return id != null && priceById[String(id)] ? priceById[String(id)] : undefined;
+}
+
 // viewProductDetail / clickProductLink product -> neutral item.
-// baseCost is often absent on product views, so Price degrades to 0.
+// baseCost is usually absent on product views; fall back to a price cached from
+// a prior add/checkout this session, else Price degrades to 0.
 function mapProductToItem(product) {
     const p = product || {};
     return {
         productName: p.name,
         productId: p.id,
         brand: getBrandFromHostname(),
-        price: p.baseCost,
+        price: p.baseCost != null ? p.baseCost : priceForProductId(p.id),
         categories: p.category && p.category.name ? [p.category.name] : [],
         imageURL: pickImageURL(p.images),
-        url: currentURL(),
+        url: productURL(p.id),
         modifiers: [],
     };
 }
@@ -71,9 +105,10 @@ function mapBasketProductToItem(basketProduct) {
         productId: product.id,
         brand: getBrandFromHostname(),
         price: bp.unitCost,
+        quantity: bp.quantity,
         categories: bp.categoryName ? [bp.categoryName] : [],
         imageURL: pickImageURL(product.images) || imageForProductId(product.id),
-        url: currentURL(),
+        url: productURL(product.id),
         modifiers: parseModifiers(bp.customizeDescription),
     };
 }
@@ -87,7 +122,7 @@ function mapBasketProductToLineItem(basketProduct) {
         productName: bp.productName || product.name,
         quantity: bp.quantity,
         itemPrice: bp.unitCost,
-        productURL: currentURL(),
+        productURL: productURL(product.id),
         imageURL: pickImageURL(product.images) || imageForProductId(product.id),
         productCategories: bp.categoryName ? [bp.categoryName] : [],
         modifiers: parseModifiers(bp.customizeDescription),
@@ -99,10 +134,10 @@ function mapBasketToCart(basket) {
     const b = basket || {};
     const products = Array.isArray(b.basketProducts) ? b.basketProducts : [];
     return {
-        value: b.subTotal,
+        value: b.total, // all-in order total (tax, tip, fees, less discounts) — Klaviyo $value
         brand: getBrandFromHostname(),
         fulfillmentType: mapFulfillmentType(b.handoffMode),
-        checkoutURL: currentURL(),
+        checkoutURL: checkoutURL(),
         items: products.map(mapBasketProductToLineItem),
     };
 }
@@ -136,23 +171,106 @@ export function trackViewedProduct(product) {
     });
 }
 
+function basketTotalQuantity() {
+    const b = (window.Olo && window.Olo.data && window.Olo.data.basket) || {};
+    const products = Array.isArray(b.basketProducts) ? b.basketProducts : [];
+    return products.reduce((sum, p) => sum + (Number(p && p.quantity) || 0), 0);
+}
+
+const ADD_POLL_MS = 50;
+const ADD_MAX_WAIT_MS = 800;
+
 export function trackAddedToCart(basketProduct) {
-    const item = mapBasketProductToItem(basketProduct);
-    if (!item.productName && !item.productId) {
+    const addedItem = mapBasketProductToItem(basketProduct);
+    rememberProductPrice(addedItem.productId, addedItem.price);
+    if (!addedItem.productName && !addedItem.productId) {
         debugLog('Skipping Added to Cart - no product data');
         return;
     }
-    const payload = buildAddedToCartPayload(item);
-    debugLog('Added to Cart payload:', payload);
-    klaviyo.track(ADDED_TO_CART, payload).then(() => {
-        debugLog('Added to Cart tracked');
-    }).catch((err) => {
-        debugLog('Error tracking Added to Cart:', err);
-    });
+
+    // Olo emits v1.addToCart slightly BEFORE it updates window.Olo.data.basket,
+    // so reading immediately misses the just-added item. Wait for the basket's
+    // total quantity to grow (the add landed), then snapshot the full cart for
+    // $value / ItemNames / Items[].
+    const beforeQty = basketTotalQuantity();
+    let waited = 0;
+
+    const fire = (basketGrew) => {
+        const rawBasket = (window.Olo && window.Olo.data && window.Olo.data.basket) || {};
+        const cartBasket = { ...rawBasket };
+        let products = Array.isArray(rawBasket.basketProducts) ? rawBasket.basketProducts.slice() : [];
+
+        if (!basketGrew) {
+            // Timeout: the basket never reflected the add, so it's stale. The
+            // event's basketProduct is the freshest data for the added line — use
+            // it (replacing a stale matching row, including the multiple-of-an-
+            // existing-item case, or appending a new one). The basket total is
+            // stale too, so drop it and let $value sum from the line items.
+            const addedId = basketProduct && basketProduct.product && basketProduct.product.id;
+            if (addedId != null) {
+                const idx = products.findIndex((p) => p && p.product && String(p.product.id) === String(addedId));
+                if (idx >= 0) products[idx] = basketProduct;
+                else products.push(basketProduct);
+            }
+            delete cartBasket.total;
+        }
+        cartBasket.basketProducts = products;
+
+        const cart = mapBasketToCart(cartBasket);
+        cart.items.forEach((li) => rememberProductPrice(li.productId, li.itemPrice));
+
+        const payload = buildAddedToCartPayload(addedItem, cart);
+        debugLog('Added to Cart payload:', payload);
+        klaviyo.track(ADDED_TO_CART, payload).then(() => {
+            debugLog('Added to Cart tracked');
+        }).catch((err) => {
+            debugLog('Error tracking Added to Cart:', err);
+        });
+    };
+
+    const timer = setInterval(() => {
+        waited += ADD_POLL_MS;
+        const grew = basketTotalQuantity() > beforeQty;
+        if (grew || waited >= ADD_MAX_WAIT_MS) {
+            clearInterval(timer);
+            fire(grew);
+        }
+    }, ADD_POLL_MS);
+}
+
+// The checkout page can load more than once in quick succession (/checkout then
+// /checkout/auth, or a reload), each firing Started Checkout. Collapse only those
+// rapid repeats for the SAME basket within a short window — returning to checkout
+// later, or with a changed cart, should fire a fresh Started Checkout.
+const CHECKOUT_DEDUPE_MS = 5000;
+const CHECKOUT_LAST_KEY = 'klOloLastCheckout';
+
+function checkoutFiredRecently(guid) {
+    try {
+        const last = JSON.parse(sessionStorage.getItem(CHECKOUT_LAST_KEY));
+        return !!last && last.guid === guid && (Date.now() - last.at) < CHECKOUT_DEDUPE_MS;
+    } catch (err) {
+        return false;
+    }
+}
+
+function markCheckoutFired(guid) {
+    try {
+        sessionStorage.setItem(CHECKOUT_LAST_KEY, JSON.stringify({ guid: guid, at: Date.now() }));
+    } catch (err) { /* sessionStorage unavailable */ }
 }
 
 export function trackStartedCheckout(basket) {
-    const cart = mapBasketToCart(basket);
+    const b = basket || {};
+    const guid = b.guid || b.id || '';
+    if (checkoutFiredRecently(guid)) {
+        debugLog('Skipping Started Checkout fired in quick succession for basket', guid);
+        return;
+    }
+    markCheckoutFired(guid);
+
+    const cart = mapBasketToCart(b);
+    cart.items.forEach((li) => rememberProductPrice(li.productId, li.itemPrice));
     const payload = buildStartedCheckoutPayload(cart);
     debugLog('Started Checkout payload:', payload);
     klaviyo.track(STARTED_CHECKOUT, payload).then(() => {
